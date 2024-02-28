@@ -3,6 +3,8 @@ package global
 import (
 	"Graduation/config"
 
+	"context"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -20,6 +22,10 @@ var (
 	GVA_VIP *viper.Viper
 	// 全局 zap 用来全局记录日志
 	GVA_LOG *zap.Logger
-	// 全局gorm 操作数据库
+	// 全局 gorm 操作数据库
 	GVA_DB *gorm.DB
+	// 全局 redis 操作缓存数据库
+	GVA_REDIS *redis.Client
+	// 全局ctx
+	GVA_CTX = context.Background()
 )

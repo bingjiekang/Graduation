@@ -27,7 +27,7 @@ func CreateToken(uuid int64) (string, error) {
 		Uuid: uuid,
 		Jwtclaim: jwt.StandardClaims{
 			NotBefore: time.Now().Unix() - 60,    // 1分钟前开始生效
-			ExpiresAt: time.Now().Unix() + 60*60, // 1小时后过期
+			ExpiresAt: time.Now().Unix() + 60*60, // 1个小时后过期
 			Issuer:    "AuthorJay",
 		},
 	}
@@ -44,14 +44,19 @@ func CreateToken(uuid int64) (string, error) {
 }
 
 // jwt解密
-func UndoToken(token string) (uuid int64, err error) {
+func UndoToken(token string) (uuid int64, err error, ok bool) {
 	Token, err := jwt.ParseWithClaims(token, &Claim{}, func(token *jwt.Token) (interface{}, error) {
 		return signingKey, nil
 	})
 	if err != nil {
 		fmt.Println(err.Error())
-		return 0, err
+		return 0, err, false
+	}
+	// 已经超时
+	if time.Now().Unix() > Token.Claims.(*Claim).Jwtclaim.ExpiresAt {
+		// fmt.Println("Token 已经超时!")
+		return 0, fmt.Errorf("Token已超时!"), false
 	}
 	// 返回唯一标识Guid和管理员id
-	return Token.Claims.(*Claim).Uuid, nil
+	return Token.Claims.(*Claim).Uuid, nil, true
 }

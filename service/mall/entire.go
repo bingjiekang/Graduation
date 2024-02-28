@@ -1,5 +1,5 @@
 package mall
 
-type MallService struct {
+type MallServiceGroup struct {
 	MallUserService
 }

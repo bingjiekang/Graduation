@@ -82,7 +82,9 @@ func CrossDomain() gin.HandlerFunc {
 	如下 4.2.3
 	
 	// 在main函数中启动并初始化他们三个
-
+	global.GVA_VIP = utils.Viper()        // 初始化Viper
+	global.GVA_LOG = utils.Zap()          // 初始化zap日志库
+	global.GVA_DB = utils.InitGormMysql() // gorm连接数据库
 ```
 
 #### 4.2.1.配置 viper
@@ -400,7 +402,7 @@ func CreateToken(uuid int64) (string, error) {
 		Uuid: uuid,
 		Jwtclaim: jwt.StandardClaims{
 			NotBefore: time.Now().Unix() - 60,    // 1分钟前开始生效
-			ExpiresAt: time.Now().Unix() + 60*60, // 1小时后过期
+			ExpiresAt: time.Now().Unix() + 60*60, // 1个小时后过期
 			Issuer:    "AuthorJay",
 		},
 	}
@@ -417,16 +419,21 @@ func CreateToken(uuid int64) (string, error) {
 }
 
 // jwt解密
-func UndoToken(token string) (uuid int64, err error) {
+func UndoToken(token string) (uuid int64, err error, ok bool) {
 	Token, err := jwt.ParseWithClaims(token, &Claim{}, func(token *jwt.Token) (interface{}, error) {
 		return signingKey, nil
 	})
 	if err != nil {
 		fmt.Println(err.Error())
-		return 0, err
+		return 0, err, false
+	}
+	// 已经超时
+	if time.Now().Unix() > Token.Claims.(*Claim).Jwtclaim.ExpiresAt {
+		// fmt.Println("Token 已经超时!")
+		return 0, fmt.Errorf("Token已超时!"), false
 	}
 	// 返回唯一标识Guid和管理员id
-	return Token.Claims.(*Claim).Uuid, nil
+	return Token.Claims.(*Claim).Uuid, nil, true
 }
 
 ```
@@ -446,13 +453,11 @@ import (
 	snowflake "github.com/bingjiekang/SnowFlake"
 )
 
+// initialization
+var snowf, _ = snowflake.GetSnowFlake(0, "", "")
+
 // 生成唯一标识的雪花id
 func SnowFlakeUUid() int64 {
-	// initialization
-	snowf, err := snowflake.GetSnowFlake(0, "", "")
-	if err != nil {
-		fmt.Println(err)
-	}
 	// output ID
 	return snowf.Generate()
 }
@@ -460,7 +465,119 @@ func SnowFlakeUUid() int64 {
 
 ```
 
+#### redis 配置和初始化
 
+```golang
+// 下载 redis 依赖包
+//  go get github.com/redis/go-redis/v9
+
+package utils
+
+import (
+	"Graduation/global"
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+)
+
+func RedisConnect() *redis.Client {
+	var r = global.GVA_CONFIG.Redis
+	options := redis.Options{
+		Addr:            r.RedisHost + ":" + r.RedisPort,
+		DB:              r.RedisDb,
+		PoolSize:        r.RedisPoolSize,                                 // Redis连接池大小
+		MaxRetries:      r.RedisMaxRetries,                               // 最大重试次数
+		ConnMaxIdleTime: time.Second * time.Duration(r.RedisIdleTimeout), // 空闲链接超时时间
+	}
+	if r.RedisPassword != "" {
+		options.Password = r.RedisPassword
+	}
+	Rdb := redis.NewClient(&options)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	pong, err := Rdb.Ping(ctx).Result()
+	if err == redis.Nil {
+		global.GVA_LOG.Debug("[StoreRedis] Nil reply returned by Rdb when key does not exist.")
+	} else if err != nil {
+		global.GVA_LOG.Error(fmt.Sprintf("[StoreRedis] redis connRdb err,err=%s", err))
+		panic(err)
+	} else {
+		global.GVA_LOG.Debug(fmt.Sprintf("[StoreRedis] redis connRdb success,suc=%s", pong))
+	}
+	return Rdb
+
+}
+
+```
+
+```golang
+
+package config
+// 缓存数据库
+type Redis struct {
+	RedisHost        string `mapstructure:"redis-host" json:"redisHost" yaml:"redis-host"` // redis地址
+	RedisPort        string `mapstructure:"redis-port" json:"redisPort" yaml:"redis-port"`
+	RedisPassword    string `mapstructure:"redis-password" json:"redisPassword" yaml:"redis-password"`
+	RedisDb          int    `mapstructure:"redis-db" json:"redisDb" yaml:"redis-db"`
+	RedisPoolSize    int    `mapstructure:"redis-pool-size" json:"redisPoolSize" yaml:"redis-pool-size"`
+	RedisMaxRetries  int    `mapstructure:"redis-max-retries" json:"redisMaxRetries" yaml:"redis-max-retries"`
+	RedisIdleTimeout int    `mapstructure:"redis-idle-timeout" json:"redisIdleTimeout" yaml:"redis-idle-timeout"`
+}
+
+```
+
+#### 手机号以及密码验证
+
+```golang
+
+package utils
+import "regexp"
+
+// 验证手机号是否合法
+func ValidatePhoneNumber(phone string) bool {
+	// 定义手机号格式的正则表达式
+	pattern := `^1[3456789]\d{9}$`
+	// 创建正则表达式对象并编译
+	reg := regexp.MustCompile(pattern)
+	// 判断手机号是否符合正则表达式
+	if reg.MatchString(phone) {
+		return true
+	} else {
+		return false
+	}
+}
+
+// 验证密码是否符合要求(8位及以上,包含大小写字母或者数字和特殊字符)
+func ValidatePassword(password string) bool {
+	// 定义密码要求的正则表达式
+	pattern := "^[A-Za-z\\d@$!%*#?&]{8,}$"
+
+	// 创建正则表达式对象
+	regExp := regexp.MustCompile(pattern)
+
+	// 判断密码是否与正则表达式匹配
+	if regExp.MatchString(password) {
+		return true
+	} else {
+		return false
+	}
+}
+	
+```
+
+#### md5 加密
+
+```golang
+// 对密码进行加密的md5算法
+func Md5(message string) string {
+	// 创建一个新的hash对象将字符串转为字节切片
+	hash := md5.Sum([]byte(message))
+	// 将字节切片转为16进制字符串标识
+	return hex.EncodeToString(hash[:])
+}
+```
 
 
 
