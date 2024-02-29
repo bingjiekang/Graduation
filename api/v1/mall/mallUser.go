@@ -5,7 +5,6 @@ import (
 	"Graduation/model/common/response"
 	"Graduation/model/mall/request"
 	"Graduation/utils"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -45,24 +44,48 @@ func (m *MallUserApi) UserLogin(c *gin.Context) {
 	}
 	// 校验登陆信息是否正确
 	if err, _, token := mallUserService.LoginUser(req); err != nil {
-		response.FailWithMessage("登陆失败!", c)
+		response.FailWithMessage("登陆失败!请检查账号和密码是否错误", c)
 	} else {
 		response.OkWithData(token, c)
 	}
-	// // fmt.Println("接收登陆")
-	// response.OkWithMessage("登陆成功!", c)
-
 }
 
 // 处理用户退出的路由接口转接
 func (m *MallUserApi) UserLogout(c *gin.Context) {
 	token := c.GetHeader("token")
-	fmt.Println("登陆token", token)
+	global.GVA_LOG.Info("登陆token:" + token)
+	// 检查并删除用户 token
 	if err := mallUserService.DeleteMallUserToken(token); err != nil {
 		response.FailWithMessage("登出失败", c)
 	} else {
 		response.OkWithMessage("登出成功", c)
 	}
-	response.OkWithMessage("登出成功", c)
+}
 
+// 处理用户信息的路由接口转接
+func (m *MallUserApi) UserInfo(c *gin.Context) {
+	token := c.GetHeader("token")
+	// 获取用户信息并返回
+	if err, userDetail := mallUserService.GetUserInfo(token); err != nil {
+		global.GVA_LOG.Error("未查询到用户记录", zap.Error(err))
+		response.FailWithMessage("未查询到用户记录", c)
+	} else {
+		response.OkWithData(userDetail, c)
+	}
+}
+
+// 用户修改信息接口路由
+func (m *MallUserApi) UpdateUserInfo(c *gin.Context) {
+	token := c.GetHeader("token")
+	var req request.UpdateUserInfoParam
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		global.GVA_LOG.Error("用户更新的信息无法绑定对应结构")
+	}
+	// 获取用户信息
+	if err := mallUserService.UpdateUserInfo(token, req); err != nil {
+		global.GVA_LOG.Error("更新用户信息失败", zap.Error(err))
+		response.FailWithMessage("更新用户信息失败"+err.Error(), c)
+	}
+	response.OkWithMessage("更新成功", c)
 }

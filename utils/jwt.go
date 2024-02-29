@@ -44,19 +44,19 @@ func CreateToken(uuid int64) (string, error) {
 }
 
 // jwt解密
-func UndoToken(token string) (uuid int64, err error, ok bool) {
+func UndoToken(token string) (uuid int64, err error, ok int64) {
 	Token, err := jwt.ParseWithClaims(token, &Claim{}, func(token *jwt.Token) (interface{}, error) {
 		return signingKey, nil
 	})
 	if err != nil {
 		fmt.Println(err.Error())
-		return 0, err, false
+		return 0, err, 0
 	}
 	// 已经超时
 	if time.Now().Unix() > Token.Claims.(*Claim).Jwtclaim.ExpiresAt {
 		// fmt.Println("Token 已经超时!")
-		return 0, fmt.Errorf("Token已超时!"), false
+		return 0, fmt.Errorf("Token已超时!"), 1
 	}
 	// 返回唯一标识Guid和管理员id
-	return Token.Claims.(*Claim).Uuid, nil, true
+	return Token.Claims.(*Claim).Uuid, nil, 2
 }
