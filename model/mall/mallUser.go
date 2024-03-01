@@ -2,6 +2,7 @@ package mall
 
 import "time"
 
+// 用户信息
 type MallUser struct {
 	UserId        int       `json:"userId" form:"userId" gorm:"primarykey;AUTO_INCREMENT"`
 	UUid          int64     `json:"uUid" form:"uUid" gorm:"column:u_uid;comment:唯一标识id"`

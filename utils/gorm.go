@@ -38,7 +38,8 @@ func InitGormMysql() *gorm.DB {
 		sqlDB.SetMaxIdleConns(m.MaxIdleConns)
 		sqlDB.SetMaxOpenConns(m.MaxOpenConns)
 		// 创建数据表...(many)
-		db.AutoMigrate(&mall.MallUser{}) // 用户信息表
+		db.AutoMigrate(&mall.MallUser{})        // 用户信息表
+		db.AutoMigrate(&mall.MallUserAddress{}) // 用户地址表
 		// db.AutoMigrate(&users.UserTrade{})
 		global.GVA_LOG.Info("数据库连接成功!")
 		return db

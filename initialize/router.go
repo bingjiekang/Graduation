@@ -18,8 +18,9 @@ func Routers() *gin.Engine {
 	// 分组
 	MallGroup := Router.Group("api")
 	{
-		// 初始化商城路由
-		mallRouter.ApiMallUserRouter(MallGroup) // 连接到用户登陆及注册信息路由
+		// 注册并初始化商城路由
+		mallRouter.ApiMallUserRouter(MallGroup)        // 注册初始化用户登陆及注册信息路由
+		mallRouter.ApiMallUserAddressRouter(MallGroup) // 注册并初始化用户地址路由
 	}
 	return Router
 }

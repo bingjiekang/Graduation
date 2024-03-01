@@ -96,7 +96,7 @@ func (m *MallUserService) ExistUserToken(token string) (err error, tm int64) {
 // 获取用户信息
 func (m *MallUserService) GetUserInfo(token string) (err error, userInfoDetail resp.MallUserDetailResponse) {
 	// 判断用户是否存在
-	if !m.IsUserExist(token) {
+	if !IsUserExist(token) {
 		return errors.New("不存在的用户"), userInfoDetail
 	}
 	var userInfo mall.MallUser
@@ -117,7 +117,7 @@ func (m *MallUserService) GetUserInfo(token string) (err error, userInfoDetail r
 // 更改用户信息
 func (m *MallUserService) UpdateUserInfo(token string, req requ.UpdateUserInfoParam) (err error) {
 	// 判断用户是否存在
-	if !m.IsUserExist(token) {
+	if !IsUserExist(token) {
 		return errors.New("不存在的用户")
 	}
 	var userInfo mall.MallUser
@@ -138,7 +138,7 @@ func (m *MallUserService) UpdateUserInfo(token string, req requ.UpdateUserInfoPa
 }
 
 // 判断用户是否存在
-func (m *MallUserService) IsUserExist(token string) bool {
+func IsUserExist(token string) bool {
 	var userInfo mall.MallUser
 	uuid, _, _ := utils.UndoToken(token)
 	// uid := fmt.Sprintf("%d", uuid)

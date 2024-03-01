@@ -833,4 +833,293 @@ func (m *MallUserService) IsUserExist(token string) bool {
 
 ### 用户地址管理代码编写
 
+#### 增、删、改、查用户地址
+
+```golang
+// go get -u "github.com/jinzhu/copier" copier函数 复制对应相同的字段
+
+package mall
+
+import (
+	"Graduation/global"
+	"Graduation/model/common/response"
+	"Graduation/model/mall/request"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type MallUserAddressApi struct {
+}
+
+// 增加用户地址信息
+func (m *MallUserAddressApi) AddUserAddress(c *gin.Context) {
+	var req request.AddAddressParam
+	_ = c.ShouldBindJSON(&req)
+	token := c.GetHeader("token")
+	// 保存用户地址信息
+	err := mallUserAddressService.AddUserAddress(token, req)
+	if err != nil {
+		global.GVA_LOG.Error("创建失败", zap.Error(err))
+		response.FailWithMessage("创建失败:"+err.Error(), c)
+	} else {
+		response.OkWithMessage("创建成功", c)
+	}
+}
+
+// 查询用户地址列表信息
+func (m *MallUserAddressApi) GetAddressList(c *gin.Context) {
+	token := c.GetHeader("token")
+	if err, userAddressList := mallUserAddressService.GetUserAddressList(token); err != nil {
+		global.GVA_LOG.Error("获取地址列表信息失败", zap.Error(err))
+		response.FailWithMessage("获取地址列表信息失败:"+err.Error(), c)
+	} else if len(userAddressList) == 0 {
+		global.GVA_LOG.Info("获取地址列表信息为空")
+		response.OkWithData(nil, c)
+	} else {
+		response.OkWithData(userAddressList, c)
+	}
+}
+
+// 查看用户指定标识的地址信息
+func (m *MallUserAddressApi) GetUserAddress(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("addressId"), 10, 64)
+	token := c.GetHeader("token")
+	if err, userAddress := mallUserAddressService.GetUserAddress(token, id); err != nil {
+		global.GVA_LOG.Error("获取指定地址信息失败", zap.Error(err))
+		response.FailWithMessage("获取指定地址信息失败:"+err.Error(), c)
+	} else {
+		response.OkWithData(userAddress, c)
+	}
+}
+
+// 修改用户地址信息
+func (m *MallUserAddressApi) UpdateUserAddress(c *gin.Context) {
+	// 接受修改的用户信息并绑定对应结构体
+	var req request.UpdateAddressParam
+	_ = c.ShouldBindJSON(&req)
+	token := c.GetHeader("token")
+	// 修改用户地址信息
+	err := mallUserAddressService.UpdateUserAddress(token, req)
+	if err != nil {
+		global.GVA_LOG.Error("用户地址信息修改失败", zap.Error(err))
+		response.FailWithMessage("用户地址信息修改失败:"+err.Error(), c)
+	} else {
+		response.OkWithMessage("用户地址信息修改成功", c)
+	}
+}
+
+// 删除指定用户标识的地址信息
+func (m *MallUserAddressApi) DeleteUserAddress(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("addressId"), 10, 64)
+	token := c.GetHeader("token")
+	if err := mallUserAddressService.DeleteUserAddress(token, id); err != nil {
+		global.GVA_LOG.Error("删除用户指定地址信息失败", zap.Error(err))
+		response.FailWithMessage("删除用户指定地址信息失败:"+err.Error(), c)
+	} else {
+		response.OkWithMessage("删除用户地址成功", c)
+	}
+}
+
+```
+
+#### 对应增删改查的数据库操作方法
+
+```golang
+package mall
+
+import (
+	"Graduation/global"
+	"Graduation/model/mall"
+	requ "Graduation/model/mall/request"
+	"Graduation/utils"
+	"errors"
+
+	"github.com/jinzhu/copier"
+)
+
+type MallUserAddressService struct {
+}
+
+// 用户地址保存
+func (m *MallUserAddressService) AddUserAddress(token string, req requ.AddAddressParam) (err error) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("用户不存在")
+	}
+	// 用户地址信息
+	var userAddress mall.MallUserAddress
+	err = copier.Copy(&userAddress, &req)
+	if err != nil {
+		return err
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	userAddress.Uuid = uuid
+	// 判断是否为默认地址
+	if req.DefaultFlag == 1 { // 新增默认地址
+		// 查询是否已有默认地址
+		if err = UpdateUserDefaultAddress(uuid); err != nil {
+			return err
+		}
+		// // 查询是否已有默认地址
+		// var defaultUserAddress mall.MallUserAddress
+		// global.GVA_DB.Where("u_uid=? and default_flag =1 and is_deleted = 0", uuid).First(&defaultUserAddress)
+		// // 已有默认地址(将原来默认地址取消)
+		// if defaultUserAddress != (mall.MallUserAddress{}) {
+		// 	defaultUserAddress.DefaultFlag = 0 // 设为非默认
+		// 	err = global.GVA_DB.Save(&defaultUserAddress).Error
+		// 	if err != nil {
+		// 		return
+		// 	}
+		// }
+
+	}
+	// 创建新的地址
+	if err = global.GVA_DB.Create(&userAddress).Error; err != nil {
+		return
+	}
+	return
+}
+
+// GetUserAddressList 获取全部收货地址
+func (m *MallUserAddressService) GetUserAddressList(token string) (err error, userAddress []mall.MallUserAddress) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("用户不存在"), userAddress
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	// 得到用户全部收货地址信息
+	global.GVA_DB.Where("u_uid=? and is_deleted=0", uuid).Find(&userAddress)
+	return
+}
+
+// 查询对应标识地址的信息
+func (m *MallUserAddressService) GetUserAddress(token string, id int64) (err error, userAddress mall.MallUserAddress) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("用户不存在"), userAddress
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	// 得到用户对应标识id的收货地址信息
+	global.GVA_DB.Where("u_uid = ? and address_id = ? and is_deleted = 0", uuid, id).Find(&userAddress)
+	return
+}
+
+// 修改对应标识地址的信息
+func (m *MallUserAddressService) UpdateUserAddress(token string, req requ.UpdateAddressParam) (err error) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("用户不存在")
+	}
+	// 解析 token 并获得uuid
+	uuid, _, _ := utils.UndoToken(token)
+	// 修改对应标识的 地址信息
+	var reqUserAddr mall.MallUserAddress
+	// 获取对应uid和对应标识的地址信息
+	if err = global.GVA_DB.Where("address_id = ? and u_uid = ?", req.AddressId, uuid).First(&reqUserAddr).Error; err != nil {
+		// 如果查询不到 证明传入的地址信息标识错误
+		return errors.New("用户地址不存在")
+	}
+	// 成功获取到对应标识的地址信息
+	if uuid != reqUserAddr.Uuid { // 不是用户本人
+		return errors.New("非用户本人 禁止该操作！")
+	}
+	// 将对应修改的信息保存到 准备修改的这个对应标识的结构体里
+	err = copier.Copy(&reqUserAddr, &req)
+	if err != nil {
+		return
+	}
+	// 修改对应数据信息 并保存
+	if req.DefaultFlag == 1 { // 如果是默认收货地址
+		// 查询是否已有默认地址
+		if err = UpdateUserDefaultAddress(uuid); err != nil {
+			return err
+		}
+	}
+	// 将对应的uuid赋值进去
+	reqUserAddr.Uuid = uuid
+	err = global.GVA_DB.Save(&reqUserAddr).Error
+	return
+}
+
+// 查询是否有默认地址信息 有默认地址信息则直接修改,
+func UpdateUserDefaultAddress(uuid int64) (err error) {
+	// 查询是否已有默认地址
+	var defaultUserAddress mall.MallUserAddress
+	global.GVA_DB.Where("u_uid=? and default_flag =1 and is_deleted = 0", uuid).First(&defaultUserAddress)
+	// 已有默认地址(将原来默认地址取消)
+	if defaultUserAddress != (mall.MallUserAddress{}) {
+		defaultUserAddress.DefaultFlag = 0 // 设为非默认
+		err = global.GVA_DB.Save(&defaultUserAddress).Error
+		if err != nil {
+			return
+		}
+	}
+	return nil
+}
+
+// 删除对应标识的用户地址信息
+func (m *MallUserAddressService) DeleteUserAddress(token string, id int64) (err error) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("用户不存在")
+	}
+	// 解析 token 并获得uuid
+	uuid, _, _ := utils.UndoToken(token)
+	// 修改对应标识的 地址信息
+	var reqUserAddr mall.MallUserAddress
+	// 获取对应uid和对应标识的地址信息
+	if err = global.GVA_DB.Where("address_id = ? and u_uid = ?", id, uuid).First(&reqUserAddr).Error; err != nil {
+		// 如果查询不到 证明传入的地址信息标识错误
+		return errors.New("用户地址不存在")
+	}
+	// 成功获取到对应标识的地址信息
+	if uuid != reqUserAddr.Uuid { // 不是用户本人
+		return errors.New("非用户本人 禁止该操作！")
+	}
+	err = global.GVA_DB.Delete(&reqUserAddr).Error
+	return
+}
+
+```
+
+#### 对应修改地址信息的路由建立
+
+```golang
+package mall
+
+import (
+	v1 "Graduation/api/v1"
+	"Graduation/middleware"
+
+	"github.com/gin-gonic/gin"
+)
+
+// 用户地址路由连接表
+type MallUserAddressRouter struct {
+}
+
+func (m *MallUserRouter) ApiMallUserAddressRouter(Router *gin.RouterGroup) {
+	mallUserAddressRouter := Router.Group("v1").Use(middleware.UserJWTAuth())
+	var userAddressApi = v1.ApiGroupApp.MallApiGroup.MallUserAddressApi
+	{
+		mallUserAddressRouter.POST("/address", userAddressApi.AddUserAddress)                 // 增加地址
+		mallUserAddressRouter.GET("/address", userAddressApi.GetAddressList)                  // 查看用户全部地址列表信息
+		mallUserAddressRouter.GET("/address/:addressId", userAddressApi.GetUserAddress)       // 获取指定地址详情
+		mallUserAddressRouter.PUT("/address", userAddressApi.UpdateUserAddress)               // 修改用户指定地址信息
+		mallUserAddressRouter.DELETE("/address/:addressId", userAddressApi.DeleteUserAddress) //删除地址
+		// mallUserAddressRouter.GET("/address/default", userAddressApi.GetMallUserDefaultAddress) //获取默认地址
+
+	}
+
+}
+
+```
+
+
+### 获取商品数据（爬虫）
+
+
+### 首页信息显示
 
