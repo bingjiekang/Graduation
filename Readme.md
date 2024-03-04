@@ -1117,9 +1117,264 @@ func (m *MallUserRouter) ApiMallUserAddressRouter(Router *gin.RouterGroup) {
 
 ```
 
-
-### 获取商品数据（爬虫）
-
-
 ### 首页信息显示
+
+#### 配置首页对应信息路由
+
+
+```golang
+
+// 轮播商品展示
+	err, _, mallCarouseInfo := mallCarouselService.GetIndexCarousels(5)
+	if err != nil {
+		global.GVA_LOG.Error("轮播图获取失败"+err.Error(), zap.Error(err))
+		response.FailWithMessage("轮播图获取失败", c)
+	}
+	// 新品上线展示
+	err, newGoodses := mallIndexConfigService.GetIndexInfomation(enum.IndexGoodsNew.Code(), 5)
+	if err != nil {
+		global.GVA_LOG.Error("新品获取失败"+err.Error(), zap.Error(err))
+		response.FailWithMessage("新品获取失败", c)
+	}
+	// 热门商品展示
+	err, hotGoodses := mallIndexConfigService.GetIndexInfomation(enum.IndexGoodsHot.Code(), 4)
+	if err != nil {
+		global.GVA_LOG.Error("热门商品获取失败"+err.Error(), zap.Error(err))
+		response.FailWithMessage("热门商品获取失败", c)
+	}
+	// 最新推荐商品展示
+	err, recommendGoodses := mallIndexConfigService.GetIndexInfomation(enum.IndexGoodsRecommond.Code(), 10)
+	if err != nil {
+		global.GVA_LOG.Error("推荐商品获取失败"+err.Error(), zap.Error(err))
+		response.FailWithMessage("推荐商品获取失败", c)
+	}
+	// 首页全部商品数据
+	indexResult := make(map[string]interface{})
+	indexResult["carousels"] = mallCarouseInfo         // 轮播图数据
+	indexResult["newGoodses"] = newGoodses             // 新品上市
+	indexResult["hotGoodses"] = hotGoodses             // 热门商品
+	indexResult["recommendGoodses"] = recommendGoodses // 推荐商品
+	response.OkWithData(indexResult, c)
+
+```
+
+
+#### 首页信息对应数据库操作
+
+```golang
+package mall
+
+import (
+	"Graduation/global"
+	"Graduation/model/mall"
+	"Graduation/model/mall/response"
+)
+
+type MallCarouselService struct {
+}
+
+// GetIndexCarousels 首页返回固定数量的轮播图对象
+func (m *MallCarouselService) GetIndexCarousels(num int) (err error, mallCarousels []mall.MallCarousel, list interface{}) {
+	var carouselIndexs []response.MallIndexCarouselResponse
+	err = global.GVA_DB.Where("is_deleted = 0").Order("carousel_rank desc").Limit(num).Find(&mallCarousels).Error
+	for _, carousel := range mallCarousels {
+		carouselIndex := response.MallIndexCarouselResponse{
+			CarouselUrl: carousel.CarouselUrl,
+			RedirectUrl: carousel.RedirectUrl,
+		}
+		carouselIndexs = append(carouselIndexs, carouselIndex)
+	}
+	return err, mallCarousels, carouselIndexs
+}
+
+```
+
+```golang
+package mall
+
+import (
+	"Graduation/global"
+	"Graduation/model/mall"
+	"Graduation/model/mall/response"
+	"Graduation/utils"
+)
+
+type MallIndexInfomationService struct {
+}
+
+// GetIndexInfomation 首页新品/热门/推荐返回相关IndexConfig
+func (m *MallIndexInfomationService) GetIndexInfomation(configType int, num int) (err error, list interface{}) {
+	var indexConfigs []mall.MallIndexConfig
+	err = global.GVA_DB.Where("config_type = ?", configType).Where("is_deleted = 0").Order("config_rank desc").Limit(num).Find(&indexConfigs).Error
+	if err != nil {
+		return
+	}
+	// 获取商品id
+	var ids []int
+	for _, indexConfig := range indexConfigs {
+		ids = append(ids, indexConfig.GoodsId)
+	}
+	// 获取商品信息
+	var goodsList []mall.MallGoodsInfo
+	err = global.GVA_DB.Where("goods_id in ?", ids).Find(&goodsList).Error
+	var indexGoodsList []response.MallIndexConfigGoodsResponse
+	// 超出30个字符显示....
+	for _, indexGoods := range goodsList {
+		res := response.MallIndexConfigGoodsResponse{
+			GoodsId:       indexGoods.GoodsId,
+			GoodsName:     utils.ReplaceLength(indexGoods.GoodsName, 30),
+			GoodsIntro:    utils.ReplaceLength(indexGoods.GoodsIntro, 30),
+			GoodsCoverImg: indexGoods.GoodsCoverImg,
+			SellingPrice:  indexGoods.SellingPrice,
+			Tag:           indexGoods.Tag,
+		}
+		indexGoodsList = append(indexGoodsList, res)
+	}
+	return err, indexGoodsList
+}
+```
+
+### 分类信息获取
+
+#### 分类页信息转接路由
+
+```golang
+package mall
+
+import (
+	"Graduation/global"
+	"Graduation/model/common/response"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type MallGoodsCategoryApi struct {
+}
+
+// 返回分类数据 (分类页调用)
+func (m *MallGoodsCategoryApi) GetGoodsCategorize(c *gin.Context) {
+	err, list := mallGoodsCategoryService.GetGoodsCategories()
+	if err != nil {
+		global.GVA_LOG.Error("查询失败!", zap.Error(err))
+		response.FailWithMessage("查询失败"+err.Error(), c)
+	}
+	response.OkWithData(list, c)
+}
+
+```
+
+#### 分类页数据库操作
+
+```golang
+package mall
+
+import (
+	"Graduation/global"
+	"Graduation/model/mall"
+	"Graduation/model/mall/response"
+	"Graduation/utils/enum"
+
+	"github.com/jinzhu/copier"
+)
+
+type MallGoodsCategoryService struct {
+}
+
+// 获取分类页 一二三级 分类信息
+func (m *MallGoodsCategoryService) GetGoodsCategories() (err error, MallIndexCategoryVOS []response.MallIndexCategoryVO) {
+
+	// 获取并添加一级分类的固定数量的数据
+	_, firstLevelCategories := selectByLevelAndParentIdsAndNumber([]int{0}, enum.LevelOne.Code(), 10)
+	if firstLevelCategories != nil {
+		var firstLevelCategoryIds []int
+		for _, firstLevelCategory := range firstLevelCategories {
+			firstLevelCategoryIds = append(firstLevelCategoryIds, firstLevelCategory.CategoryId)
+		}
+		// 获取并添加二级分类的数据
+		_, secondLevelCategories := selectByLevelAndParentIdsAndNumber(firstLevelCategoryIds, enum.LevelTwo.Code(), 0)
+		if secondLevelCategories != nil {
+			var secondLevelCategoryIds []int
+			for _, secondLevelCategory := range secondLevelCategories {
+				secondLevelCategoryIds = append(secondLevelCategoryIds, secondLevelCategory.CategoryId)
+			}
+			// 获取并添加三级分类的数据
+			_, thirdLevelCategories := selectByLevelAndParentIdsAndNumber(secondLevelCategoryIds, enum.LevelThree.Code(), 0)
+			if thirdLevelCategories != nil {
+				// 根据 parentId 将 thirdLevelCategories 分组
+				thirdLevelCategoryMap := make(map[int][]mall.MallGoodsCategory)
+				for _, thirdLevelCategory := range thirdLevelCategories {
+					thirdLevelCategoryMap[thirdLevelCategory.ParentId] = []mall.MallGoodsCategory{}
+				}
+				for k, v := range thirdLevelCategoryMap {
+					for _, third := range thirdLevelCategories {
+						if k == third.ParentId {
+							v = append(v, third)
+						}
+						thirdLevelCategoryMap[k] = v
+					}
+				}
+				var secondLevelCategoryVOS []response.SecondLevelCategoryVO
+				// 处理二级分类
+				for _, secondLevelCategory := range secondLevelCategories {
+					var secondLevelCategoryVO response.SecondLevelCategoryVO
+					err = copier.Copy(&secondLevelCategoryVO, &secondLevelCategory)
+					// 如果该二级分类下有数据则放入 secondLevelCategoryVOS 对象中
+					if _, ok := thirdLevelCategoryMap[secondLevelCategory.CategoryId]; ok {
+						// 根据二级分类的 id 取出 thirdLevelCategoryMap 分组中的三级分类 list
+						tempGoodsCategories := thirdLevelCategoryMap[secondLevelCategory.CategoryId]
+						var thirdLevelCategoryRes []response.ThirdLevelCategoryVO
+						err = copier.Copy(&thirdLevelCategoryRes, &tempGoodsCategories)
+						secondLevelCategoryVO.ThirdLevelCategoryVOS = thirdLevelCategoryRes
+						secondLevelCategoryVOS = append(secondLevelCategoryVOS, secondLevelCategoryVO)
+					}
+
+				}
+				//处理一级分类
+				if secondLevelCategoryVOS != nil {
+					//根据 parentId 将 thirdLevelCategories 分组
+					secondLevelCategoryVOMap := make(map[int][]response.SecondLevelCategoryVO)
+					for _, secondLevelCategory := range secondLevelCategoryVOS {
+						secondLevelCategoryVOMap[secondLevelCategory.ParentId] = []response.SecondLevelCategoryVO{}
+					}
+					for k, v := range secondLevelCategoryVOMap {
+						for _, second := range secondLevelCategoryVOS {
+							if k == second.ParentId {
+								var secondLevelCategory response.SecondLevelCategoryVO
+								copier.Copy(&secondLevelCategory, &second)
+								v = append(v, secondLevelCategory)
+							}
+							secondLevelCategoryVOMap[k] = v
+						}
+					}
+					for _, firstCategory := range firstLevelCategories {
+						var newBeeMallIndexCategoryVO response.MallIndexCategoryVO
+						err = copier.Copy(&newBeeMallIndexCategoryVO, &firstCategory)
+						//如果该一级分类下有数据则放入 MallIndexCategoryVOS 对象中
+						if _, ok := secondLevelCategoryVOMap[firstCategory.CategoryId]; ok {
+							//根据一级分类的id取出secondLevelCategoryVOMap分组中的二级级分类list
+							tempGoodsCategories := secondLevelCategoryVOMap[firstCategory.CategoryId]
+							newBeeMallIndexCategoryVO.SecondLevelCategoryVOS = tempGoodsCategories
+							MallIndexCategoryVOS = append(MallIndexCategoryVOS, newBeeMallIndexCategoryVO)
+						}
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+// 获取分类数据
+func selectByLevelAndParentIdsAndNumber(ids []int, level int, limit int) (err error, categories []mall.MallGoodsCategory) {
+	// 获取对应分类数据
+	err = global.GVA_DB.Where("parent_id in ? and category_level =? and is_deleted = 0", ids, level).Order("category_rank desc").Limit(limit).Find(&categories).Error
+	return
+}
+
+```
+
+### 购物车页面信息获取
+
+
 

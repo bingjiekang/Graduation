@@ -33,18 +33,6 @@ func (m *MallUserAddressService) AddUserAddress(token string, req requ.AddAddres
 		if err = UpdateUserDefaultAddress(uuid); err != nil {
 			return err
 		}
-		// // 查询是否已有默认地址
-		// var defaultUserAddress mall.MallUserAddress
-		// global.GVA_DB.Where("u_uid=? and default_flag =1 and is_deleted = 0", uuid).First(&defaultUserAddress)
-		// // 已有默认地址(将原来默认地址取消)
-		// if defaultUserAddress != (mall.MallUserAddress{}) {
-		// 	defaultUserAddress.DefaultFlag = 0 // 设为非默认
-		// 	err = global.GVA_DB.Save(&defaultUserAddress).Error
-		// 	if err != nil {
-		// 		return
-		// 	}
-		// }
-
 	}
 	// 创建新的地址
 	if err = global.GVA_DB.Create(&userAddress).Error; err != nil {

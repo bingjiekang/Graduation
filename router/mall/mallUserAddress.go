@@ -11,7 +11,7 @@ import (
 type MallUserAddressRouter struct {
 }
 
-func (m *MallUserRouter) ApiMallUserAddressRouter(Router *gin.RouterGroup) {
+func (m *MallUserAddressRouter) ApiMallUserAddressRouter(Router *gin.RouterGroup) {
 	mallUserAddressRouter := Router.Group("v1").Use(middleware.UserJWTAuth())
 	var userAddressApi = v1.ApiGroupApp.MallApiGroup.MallUserAddressApi
 	{

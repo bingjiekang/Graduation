@@ -6,4 +6,7 @@ package mall
 
 type MallRouterGroup struct {
 	MallUserRouter
+	MallUserAddressRouter
+	MallIndexRouter
+	MallGoodsCategoryRouter
 }
