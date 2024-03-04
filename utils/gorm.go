@@ -44,6 +44,7 @@ func InitGormMysql() *gorm.DB {
 		db.AutoMigrate(&mall.MallIndexConfig{})   // 首页信息表
 		db.AutoMigrate(&mall.MallGoodsCategory{}) // 分类信息表
 		db.AutoMigrate(&mall.MallGoodsInfo{})     // 商品信息表
+		db.AutoMigrate(&mall.MallShopCartItem{})  // 购物车信息表
 		// db.AutoMigrate(&users.UserTrade{})
 		global.GVA_LOG.Info("数据库连接成功!")
 		return db

@@ -23,6 +23,8 @@ func Routers() *gin.Engine {
 		mallRouter.ApiMallUserAddressRouter(MallGroup)   // 注册并初始化用户地址路由
 		mallRouter.ApiMallIndexRouter(MallGroup)         // 注册并初始化首页信息路由
 		mallRouter.ApiMallGoodsCategoryRouter(MallGroup) // 注册并初始化分类页信息路由
+		mallRouter.ApiMallGoodsInfoRouter(MallGroup)     // 注册并初始化商品信息路由
+		mallRouter.ApiMallShopCartRouter(MallGroup)      // 注册并初始化购物车信息路由
 
 	}
 	return Router
