@@ -1,5 +1,10 @@
 2024.2.26 开始毕业论文设计
 
+	暂定:区块链商城项目
+	前端端口:xxx:8088
+	后端端口:xxx:8080
+	
+
 # 代码的实现
 
 ## 1.安装Go环境
@@ -15,8 +20,8 @@
 ### 2.1.确定使用Gin框架
 
 ```golang
-	// 下载GIn框架包
-	go get -u github.com/gin-gonic/gin
+// 下载GIn框架包
+go get -u github.com/gin-gonic/gin
 ```
 
 ## 3.确定项目目录
