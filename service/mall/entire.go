@@ -8,4 +8,5 @@ type MallServiceGroup struct {
 	MallGoodsCategoryService   // 分类页分类信息对象
 	MallGoodsInfoService       // 商品详细信息和商品搜索对象
 	MallShopCartService        // 购物车及相关操作对象
+	MallOrderService           // 订单相关操作对象
 }

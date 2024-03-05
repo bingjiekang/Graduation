@@ -2,8 +2,8 @@ package mall
 
 import (
 	"Graduation/global"
-	"Graduation/model/mall"
 	"Graduation/model/mall/response"
+	"Graduation/model/manage"
 	"Graduation/utils"
 )
 
@@ -12,7 +12,7 @@ type MallIndexInfomationService struct {
 
 // GetIndexInfomation 首页新品/热门/推荐返回相关IndexConfig
 func (m *MallIndexInfomationService) GetIndexInfomation(configType int, num int) (err error, list interface{}) {
-	var indexConfigs []mall.MallIndexConfig
+	var indexConfigs []manage.MallIndexConfig
 	err = global.GVA_DB.Where("config_type = ?", configType).Where("is_deleted = 0").Order("config_rank desc").Limit(num).Find(&indexConfigs).Error
 	if err != nil {
 		return
@@ -23,7 +23,7 @@ func (m *MallIndexInfomationService) GetIndexInfomation(configType int, num int)
 		ids = append(ids, indexConfig.GoodsId)
 	}
 	// 获取商品信息
-	var goodsList []mall.MallGoodsInfo
+	var goodsList []manage.MallGoodsInfo
 	err = global.GVA_DB.Where("goods_id in ?", ids).Find(&goodsList).Error
 	var indexGoodsList []response.MallIndexConfigGoodsResponse
 	// 超出30个字符显示....

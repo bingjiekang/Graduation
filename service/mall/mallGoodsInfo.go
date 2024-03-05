@@ -2,8 +2,8 @@ package mall
 
 import (
 	"Graduation/global"
-	"Graduation/model/mall"
 	"Graduation/model/mall/response"
+	"Graduation/model/manage"
 	"Graduation/utils"
 	"errors"
 
@@ -15,7 +15,7 @@ type MallGoodsInfoService struct {
 
 // GetMallGoodsInfo 获取商品信息
 func (m *MallGoodsInfoService) GetMallGoodsInfo(id int) (err error, res response.GoodsInfoDetailResponse) {
-	var mallGoodsInfo mall.MallGoodsInfo
+	var mallGoodsInfo manage.MallGoodsInfo
 	err = global.GVA_DB.Where("goods_id = ?", id).First(&mallGoodsInfo).Error
 	if mallGoodsInfo.GoodsSellStatus != 0 {
 		return errors.New("商品已下架"), response.GoodsInfoDetailResponse{}
@@ -34,8 +34,8 @@ func (m *MallGoodsInfoService) GetMallGoodsInfo(id int) (err error, res response
 // MallGoodsListBySearch 商品搜索分页
 func (m *MallGoodsInfoService) MallGoodsListBySearch(pageNumber int, goodsCategoryId int, keyword string, orderBy string) (err error, searchGoodsList []response.GoodsSearchResponse, total int64) {
 	// 根据搜索条件查询
-	var goodsList []mall.MallGoodsInfo
-	db := global.GVA_DB.Model(&mall.MallGoodsInfo{})
+	var goodsList []manage.MallGoodsInfo
+	db := global.GVA_DB.Model(&manage.MallGoodsInfo{})
 	if keyword != "" {
 		db.Where("goods_name like ? or goods_intro like ?", "%"+keyword+"%", "%"+keyword+"%")
 	}

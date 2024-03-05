@@ -1,9 +1,15 @@
 package mall
 
 import (
+	"Graduation/global"
+	"Graduation/model/common/response"
+	"Graduation/model/mall/request"
+	"Graduation/utils"
+
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"strconv"
 )
 
 type MallOrderApi struct {
@@ -11,7 +17,7 @@ type MallOrderApi struct {
 
 // 生成订单
 func (m *MallOrderApi) SaveOrder(c *gin.Context) {
-	var saveOrderParam mallReq.SaveOrderParam
+	var saveOrderParam request.SaveOrderParam
 	_ = c.ShouldBindJSON(&saveOrderParam)
 	if err := utils.Verify(saveOrderParam, utils.SaveOrderParamVerify); err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -19,18 +25,18 @@ func (m *MallOrderApi) SaveOrder(c *gin.Context) {
 	token := c.GetHeader("token")
 
 	priceTotal := 0
-	err, itemsForSave := mallShopCartService.GetCartItemsForSettle(token, saveOrderParam.CartItemIds)
+	err, itemsForSave := mallShopCartService.GetCartItemsTotal(token, saveOrderParam.CartItemIds)
 	if len(itemsForSave) < 1 {
 		response.FailWithMessage("无数据:"+err.Error(), c)
 	} else {
 		//总价
-		for _, newBeeMallShoppingCartItemVO := range itemsForSave {
-			priceTotal = priceTotal + newBeeMallShoppingCartItemVO.GoodsCount*newBeeMallShoppingCartItemVO.SellingPrice
+		for _, mallShopCartItemVO := range itemsForSave {
+			priceTotal = priceTotal + mallShopCartItemVO.GoodsCount*mallShopCartItemVO.SellingPrice
 		}
 		if priceTotal < 1 {
 			response.FailWithMessage("价格异常", c)
 		}
-		_, userAddress := mallUserAddressService.GetMallUserDefaultAddress(token)
+		_, userAddress := mallUserAddressService.GetUserDefaultAddress(token)
 		if err, saveOrderResult := mallOrderService.SaveOrder(token, userAddress, itemsForSave); err != nil {
 			global.GVA_LOG.Error("生成订单失败", zap.Error(err))
 			response.FailWithMessage("生成订单失败:"+err.Error(), c)

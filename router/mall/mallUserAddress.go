@@ -20,7 +20,7 @@ func (m *MallUserAddressRouter) ApiMallUserAddressRouter(Router *gin.RouterGroup
 		mallUserAddressRouter.GET("/address/:addressId", userAddressApi.GetUserAddress)       // 获取指定地址详情
 		mallUserAddressRouter.PUT("/address", userAddressApi.UpdateUserAddress)               // 修改用户指定地址信息
 		mallUserAddressRouter.DELETE("/address/:addressId", userAddressApi.DeleteUserAddress) //删除地址
-		// mallUserAddressRouter.GET("/address/default", userAddressApi.GetMallUserDefaultAddress) //获取默认地址
+		mallUserAddressRouter.GET("/address/default", userAddressApi.GetUserDefaultAddress)   //获取默认地址
 
 	}
 

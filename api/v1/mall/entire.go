@@ -9,6 +9,7 @@ type MallGroup struct {
 	MallGoodsCategoryApi
 	MallGoodsInfoApi
 	MallShopCartApi
+	MallOrderApi
 }
 
 var (
@@ -19,4 +20,5 @@ var (
 	mallGoodsCategoryService = service.ServiceGroupApp.MallServiceGroup.MallGoodsCategoryService   // 获取分类页信息
 	mallGoodsInfoService     = service.ServiceGroupApp.MallServiceGroup.MallGoodsInfoService       // 商品详情和商品搜索信息
 	mallShopCartService      = service.ServiceGroupApp.MallServiceGroup.MallShopCartService        // 购物车及相关增删改查操作
+	mallOrderService         = service.ServiceGroupApp.MallServiceGroup.MallOrderService           // 订单相关增删改查操作
 )

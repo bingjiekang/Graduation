@@ -2,8 +2,8 @@ package mall
 
 import (
 	"Graduation/global"
-	"Graduation/model/mall"
 	"Graduation/model/mall/response"
+	"Graduation/model/manage"
 	"Graduation/utils/enum"
 
 	"github.com/jinzhu/copier"
@@ -33,9 +33,9 @@ func (m *MallGoodsCategoryService) GetGoodsCategories() (err error, MallIndexCat
 			_, thirdLevelCategories := selectByLevelAndParentIdsAndNumber(secondLevelCategoryIds, enum.LevelThree.Code(), 0)
 			if thirdLevelCategories != nil {
 				// 根据 parentId 将 thirdLevelCategories 分组
-				thirdLevelCategoryMap := make(map[int][]mall.MallGoodsCategory)
+				thirdLevelCategoryMap := make(map[int][]manage.MallGoodsCategory)
 				for _, thirdLevelCategory := range thirdLevelCategories {
-					thirdLevelCategoryMap[thirdLevelCategory.ParentId] = []mall.MallGoodsCategory{}
+					thirdLevelCategoryMap[thirdLevelCategory.ParentId] = []manage.MallGoodsCategory{}
 				}
 				for k, v := range thirdLevelCategoryMap {
 					for _, third := range thirdLevelCategories {
@@ -97,7 +97,7 @@ func (m *MallGoodsCategoryService) GetGoodsCategories() (err error, MallIndexCat
 }
 
 // 获取分类数据
-func selectByLevelAndParentIdsAndNumber(ids []int, level int, limit int) (err error, categories []mall.MallGoodsCategory) {
+func selectByLevelAndParentIdsAndNumber(ids []int, level int, limit int) (err error, categories []manage.MallGoodsCategory) {
 	// 获取对应分类数据
 	err = global.GVA_DB.Where("parent_id in ? and category_level =? and is_deleted = 0", ids, level).Order("category_rank desc").Limit(limit).Find(&categories).Error
 	return

@@ -14,7 +14,7 @@ const (
 	ORDER_CLOSED_BY_JUDGE    MallOrderStatusEnum = -3
 )
 
-func GetNewBeeMallOrderStatusEnumByStatus(status int) (int, string) {
+func GetMallOrderStatusEnumByStatus(status int) (int, string) {
 	switch status {
 	case 0:
 		return 0, "待支付"

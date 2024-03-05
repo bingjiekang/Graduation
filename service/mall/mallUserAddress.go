@@ -140,3 +140,17 @@ func (m *MallUserAddressService) DeleteUserAddress(token string, id int64) (err 
 	err = global.GVA_DB.Delete(&reqUserAddr).Error
 	return
 }
+
+// 获取用户默认地址信息
+func (m *MallUserAddressService) GetUserDefaultAddress(token string) (err error, userAddress mall.MallUserAddress) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("用户不存在"), userAddress
+	}
+	// 解析 token 并获得uuid
+	uuid, _, _ := utils.UndoToken(token)
+	if err = global.GVA_DB.Where("u_uid =? and default_flag =1 and is_deleted = 0 ", uuid).First(&userAddress).Error; err != nil {
+		return errors.New("不存在默认地址失败"), userAddress
+	}
+	return
+}

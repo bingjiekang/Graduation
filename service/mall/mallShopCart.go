@@ -5,6 +5,7 @@ import (
 	"Graduation/model/mall"
 	"Graduation/model/mall/request"
 	"Graduation/model/mall/response"
+	"Graduation/model/manage"
 	"Graduation/utils"
 	"errors"
 
@@ -17,7 +18,7 @@ type MallShopCartService struct {
 // 获取购物车信息列表不分页
 func (m *MallShopCartService) GetShopCartItems(token string) (err error, cartItems []response.CartItemResponse) {
 	var shopCartItems []mall.MallShopCartItem
-	var goodsInfos []mall.MallGoodsInfo
+	var goodsInfos []manage.MallGoodsInfo
 	// 判断用户是否存在
 	if !IsUserExist(token) {
 		return errors.New("不存在的用户"), cartItems
@@ -29,7 +30,7 @@ func (m *MallShopCartService) GetShopCartItems(token string) (err error, cartIte
 		goodsIds = append(goodsIds, shopcartItem.GoodsId)
 	}
 	global.GVA_DB.Where("goods_id in ?", goodsIds).Find(&goodsInfos)
-	goodsMap := make(map[int]mall.MallGoodsInfo)
+	goodsMap := make(map[int]manage.MallGoodsInfo)
 	for _, goodsInfo := range goodsInfos {
 		goodsMap[goodsInfo.GoodsId] = goodsInfo
 	}
@@ -67,7 +68,7 @@ func (m *MallShopCartService) AddMallCartItem(token string, req request.SaveCart
 	if err != nil {
 		return errors.New("已存在！无需重复添加！")
 	}
-	err = global.GVA_DB.Where("goods_id = ? ", req.GoodsId).First(&mall.MallGoodsInfo{}).Error
+	err = global.GVA_DB.Where("goods_id = ? ", req.GoodsId).First(&manage.MallGoodsInfo{}).Error
 	if err != nil {
 		return errors.New("商品为空")
 	}
@@ -154,12 +155,12 @@ func getMallShopCartItemVOS(cartItems []mall.MallShopCartItem) (err error, cartI
 	for _, cartItem := range cartItems {
 		goodsIds = append(goodsIds, cartItem.GoodsId)
 	}
-	var mallGoods []mall.MallGoodsInfo
+	var mallGoods []manage.MallGoodsInfo
 	err = global.GVA_DB.Where("goods_id in ?", goodsIds).Find(&mallGoods).Error
 	if err != nil {
 		return
 	}
-	mallGoodsMap := make(map[int]mall.MallGoodsInfo)
+	mallGoodsMap := make(map[int]manage.MallGoodsInfo)
 	for _, goodsInfo := range mallGoods {
 		mallGoodsMap[goodsInfo.GoodsId] = goodsInfo
 	}

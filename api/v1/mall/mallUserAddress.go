@@ -81,3 +81,14 @@ func (m *MallUserAddressApi) DeleteUserAddress(c *gin.Context) {
 		response.OkWithMessage("删除用户地址成功", c)
 	}
 }
+
+// 获取默认用户地址信息
+func (m *MallUserAddressApi) GetUserDefaultAddress(c *gin.Context) {
+	token := c.GetHeader("token")
+	if err, userAddress := mallUserAddressService.GetUserDefaultAddress(token); err != nil {
+		global.GVA_LOG.Error("获取地址失败", zap.Error(err))
+		response.FailWithMessage("获取地址失败:"+err.Error(), c)
+	} else {
+		response.OkWithData(userAddress, c)
+	}
+}
