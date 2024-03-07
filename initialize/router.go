@@ -13,7 +13,7 @@ func Routers() *gin.Engine {
 	// 如果有跨域则打开
 	Router.Use(middleware.CrossDomain())
 
-	// 前端商城路由
+	// 商城路由
 	mallRouter := router.RouterGroupApp.Mall
 	// 分组
 	MallGroup := Router.Group("api")
@@ -26,6 +26,13 @@ func Routers() *gin.Engine {
 		mallRouter.ApiMallGoodsInfoRouter(MallGroup)     // 注册并初始化商品信息路由
 		mallRouter.ApiMallShopCartRouter(MallGroup)      // 注册并初始化购物车信息路由
 		mallRouter.ApiMallOrderRouter(MallGroup)         // 注册并初始化订单路由
+	}
+	// 后台管理系统路由
+	manageRouter := router.RouterGroupApp.Manage
+	// 分组
+	ManageGroup := Router.Group("manage-api")
+	{
+		manageRouter.ApiManageAdminUserRouter(ManageGroup) // 管理员和超级管理员操作
 	}
 	return Router
 }

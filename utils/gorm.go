@@ -39,15 +39,21 @@ func InitGormMysql() *gorm.DB {
 		sqlDB.SetMaxIdleConns(m.MaxIdleConns)
 		sqlDB.SetMaxOpenConns(m.MaxOpenConns)
 		// 创建数据表...(many)
-		db.AutoMigrate(&mall.MallUser{})            // 用户信息表
-		db.AutoMigrate(&mall.MallUserAddress{})     // 用户地址表
-		db.AutoMigrate(&manage.MallCarousel{})      // 轮播图表
-		db.AutoMigrate(&manage.MallIndexConfig{})   // 首页信息表
-		db.AutoMigrate(&manage.MallGoodsCategory{}) // 分类信息表
-		db.AutoMigrate(&manage.MallGoodsInfo{})     // 商品信息表
-		db.AutoMigrate(&mall.MallShopCartItem{})    // 购物车信息表
-		db.AutoMigrate(&manage.MallOrder{})         // 用户订单详情表
-		db.AutoMigrate(&manage.MallOrderItem{})     // 用户订单列表
+		{
+			db.AutoMigrate(&mall.MallUser{})            // 用户信息表
+			db.AutoMigrate(&mall.MallUserAddress{})     // 用户地址表
+			db.AutoMigrate(&manage.MallCarousel{})      // 轮播图表
+			db.AutoMigrate(&manage.MallIndexConfig{})   // 首页信息表
+			db.AutoMigrate(&manage.MallGoodsCategory{}) // 分类信息表
+			db.AutoMigrate(&manage.MallGoodsInfo{})     // 商品信息表
+			db.AutoMigrate(&mall.MallShopCartItem{})    // 购物车信息表
+			db.AutoMigrate(&manage.MallOrder{})         // 用户订单详情表
+			db.AutoMigrate(&manage.MallOrderItem{})     // 用户订单列表
+		}
+		// 后台管理系统
+		{
+			db.AutoMigrate(&manage.MallAdminUser{}) // 管理员和超级管理员信息表
+		}
 		// db.AutoMigrate(&users.UserTrade{})
 		global.GVA_LOG.Info("数据库连接成功!")
 		return db
