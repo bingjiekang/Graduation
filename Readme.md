@@ -374,7 +374,7 @@ func InitGormMysql() *gorm.DB {
 
 ### 4.3.登陆、注册、注销页面编写
 
-#### jwt验证
+#### 4.3.1.jwt验证
 
 ```golang
 // go get -u github.com/dgrijalva/jwt-go
@@ -443,7 +443,7 @@ func UndoToken(token string) (uuid int64, err error, ok bool) {
 
 ```
 
-#### uuid生成
+#### 4.3.2.uuid生成
 
 ```golang
 //  go get "github.com/bingjiekang/SnowFlake"
@@ -470,7 +470,7 @@ func SnowFlakeUUid() int64 {
 
 ```
 
-#### redis 配置和初始化
+#### 4.3.3.redis 配置和初始化
 
 ```golang
 // 下载 redis 依赖包
@@ -533,7 +533,7 @@ type Redis struct {
 
 ```
 
-#### 手机号以及密码验证
+#### 4.3.4.手机号以及密码验证
 
 ```golang
 
@@ -572,7 +572,7 @@ func ValidatePassword(password string) bool {
 	
 ```
 
-#### md5 加密
+#### 4.3.5md5 加密
 
 ```golang
 // 对密码进行加密的md5算法
@@ -585,7 +585,7 @@ func Md5(message string) string {
 ```
 
 
-#### 登陆、注册、登出代码接口编写
+#### 4.3.6.登陆、注册、登出代码接口编写
 
 ```golang
 
@@ -682,7 +682,7 @@ func (m *MallUserApi) UpdateUserInfo(c *gin.Context) {
 }
 ```
 
-#### 登陆、注册、登出代码相关数据库操作编写
+#### 4.3.7.登陆、注册、登出代码相关数据库操作编写
 
 ```golang
 package mall
@@ -836,9 +836,9 @@ func (m *MallUserService) IsUserExist(token string) bool {
 }
 ```
 
-### 用户地址管理代码编写
+### 4.4.用户地址管理代码编写
 
-#### 增、删、改、查用户地址
+#### 4.4.1.增、删、改、查用户地址
 
 ```golang
 // go get -u "github.com/jinzhu/copier" copier函数 复制对应相同的字段
@@ -929,7 +929,7 @@ func (m *MallUserAddressApi) DeleteUserAddress(c *gin.Context) {
 
 ```
 
-#### 对应增删改查的数据库操作方法
+#### 4.4.2.对应增删改查的数据库操作方法
 
 ```golang
 package mall
@@ -1089,7 +1089,7 @@ func (m *MallUserAddressService) DeleteUserAddress(token string, id int64) (err 
 
 ```
 
-#### 对应修改地址信息的路由建立
+#### 4.4.3.对应修改地址信息的路由建立
 
 ```golang
 package mall
@@ -1122,9 +1122,9 @@ func (m *MallUserRouter) ApiMallUserAddressRouter(Router *gin.RouterGroup) {
 
 ```
 
-### 首页信息显示
+### 4.5.首页信息显示
 
-#### 配置首页对应信息路由
+#### 4.5.1.配置首页对应信息路由
 
 
 ```golang
@@ -1164,7 +1164,7 @@ func (m *MallUserRouter) ApiMallUserAddressRouter(Router *gin.RouterGroup) {
 ```
 
 
-#### 首页信息对应数据库操作
+#### 4.5.2.首页信息对应数据库操作
 
 ```golang
 package mall
@@ -1239,9 +1239,9 @@ func (m *MallIndexInfomationService) GetIndexInfomation(configType int, num int)
 }
 ```
 
-### 分类信息获取
+### 4.6.分类信息获取
 
-#### 分类页信息转接路由
+#### 4.6.1.分类页信息转接路由
 
 ```golang
 package mall
@@ -1269,7 +1269,7 @@ func (m *MallGoodsCategoryApi) GetGoodsCategorize(c *gin.Context) {
 
 ```
 
-#### 分类页数据库操作
+#### 4.6.2.分类页数据库操作
 
 ```golang
 package mall
@@ -1379,9 +1379,9 @@ func selectByLevelAndParentIdsAndNumber(ids []int, level int, limit int) (err er
 
 ```
 
-### 商品页面详细信息和商品搜索获取
+### 4.7.商品页面详细信息和商品搜索获取
 
-#### 商业页面详情及搜索接口
+#### 4.7.1.商业页面详情及搜索接口
 
 ```golang
 package mall
@@ -1431,7 +1431,7 @@ func (m *MallGoodsInfoApi) GoodsSearch(c *gin.Context) {
 
 ```
 
-#### 商品详情及搜索数据库操作
+#### 4.7.2.商品详情及搜索数据库操作
 
 ```golang
 package mall
@@ -1506,9 +1506,9 @@ func (m *MallGoodsInfoService) MallGoodsListBySearch(pageNumber int, goodsCatego
 
 ```
 
-### 购物车界面编写
+### 4.8.购物车界面编写
 
-#### 购物车路由接口编写
+#### 4.8.1.购物车路由接口编写
 
 ```golang
 package mall
@@ -1589,7 +1589,7 @@ func (m *MallShopCartApi) ShopTotal(c *gin.Context) {
 }
 ```
 
-#### 购物车对应增删改查数据库操作
+#### 4.8.2.购物车对应增删改查数据库操作
 
 ```golang
 package mall
@@ -1774,6 +1774,757 @@ func getMallShopCartItemVOS(cartItems []mall.MallShopCartItem) (err error, cartI
 }
 
 ```
+
+### 4.9. 订单界面
+
+#### 4.9.1.订单路由转接
+
+```golang
+package mall
+
+import (
+	"Graduation/global"
+	"Graduation/model/common/response"
+	"Graduation/model/mall/request"
+	"Graduation/utils"
+
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type MallOrderApi struct {
+}
+
+// 生成订单
+func (m *MallOrderApi) SaveOrder(c *gin.Context) {
+	var saveOrderParam request.SaveOrderParam
+	_ = c.ShouldBindJSON(&saveOrderParam)
+	if err := utils.Verify(saveOrderParam, utils.SaveOrderParamVerify); err != nil {
+		response.FailWithMessage(err.Error(), c)
+	}
+	token := c.GetHeader("token")
+
+	priceTotal := 0
+	err, itemsForSave := mallShopCartService.GetCartItemsTotal(token, saveOrderParam.CartItemIds)
+	if len(itemsForSave) < 1 {
+		response.FailWithMessage("无数据:"+err.Error(), c)
+	} else {
+		//总价
+		for _, mallShopCartItemVO := range itemsForSave {
+			priceTotal = priceTotal + mallShopCartItemVO.GoodsCount*mallShopCartItemVO.SellingPrice
+		}
+		if priceTotal < 1 {
+			response.FailWithMessage("价格异常", c)
+		}
+		_, userAddress := mallUserAddressService.GetUserDefaultAddress(token)
+		if err, saveOrderResult := mallOrderService.SaveOrder(token, userAddress, itemsForSave); err != nil {
+			global.GVA_LOG.Error("生成订单失败", zap.Error(err))
+			response.FailWithMessage("生成订单失败:"+err.Error(), c)
+		} else {
+			response.OkWithData(saveOrderResult, c)
+		}
+	}
+}
+
+// 订单支付
+func (m *MallOrderApi) PaySuccess(c *gin.Context) {
+	orderNo := c.Query("orderNo")
+	payType, _ := strconv.Atoi(c.Query("payType"))
+	if err := mallOrderService.PaySuccess(orderNo, payType); err != nil {
+		global.GVA_LOG.Error("订单支付失败", zap.Error(err))
+		response.FailWithMessage("订单支付失败:"+err.Error(), c)
+	}
+	response.OkWithMessage("订单支付成功", c)
+}
+
+// 完成订单
+func (m *MallOrderApi) FinishOrder(c *gin.Context) {
+	orderNo := c.Param("orderNo")
+	token := c.GetHeader("token")
+	if err := mallOrderService.FinishOrder(token, orderNo); err != nil {
+		global.GVA_LOG.Error("订单签收失败", zap.Error(err))
+		response.FailWithMessage("订单签收失败:"+err.Error(), c)
+	}
+	response.OkWithMessage("订单签收成功", c)
+
+}
+
+// 取消订单
+func (m *MallOrderApi) CancelOrder(c *gin.Context) {
+	orderNo := c.Param("orderNo")
+	token := c.GetHeader("token")
+	if err := mallOrderService.CancelOrder(token, orderNo); err != nil {
+		global.GVA_LOG.Error("订单签收失败", zap.Error(err))
+		response.FailWithMessage("订单签收失败:"+err.Error(), c)
+	}
+	response.OkWithMessage("订单签收成功", c)
+
+}
+
+// 订单详情页面
+func (m *MallOrderApi) OrderDetailPage(c *gin.Context) {
+	orderNo := c.Param("orderNo")
+	token := c.GetHeader("token")
+	if err, orderDetail := mallOrderService.GetOrderDetailByOrderNo(token, orderNo); err != nil {
+		global.GVA_LOG.Error("查询订单详情接口", zap.Error(err))
+		response.FailWithMessage("查询订单详情接口:"+err.Error(), c)
+	} else {
+		response.OkWithData(orderDetail, c)
+	}
+}
+
+// 订单列表显示
+func (m *MallOrderApi) OrderList(c *gin.Context) {
+	token := c.GetHeader("token")
+	pageNumber, _ := strconv.Atoi(c.Query("pageNumber"))
+	status := c.Query("status")
+	if pageNumber <= 0 {
+		pageNumber = 1
+	}
+	if err, list, total := mallOrderService.MallOrderListBySearch(token, pageNumber, status); err != nil {
+		global.GVA_LOG.Error("查询失败!", zap.Error(err))
+		response.FailWithMessage("查询失败"+err.Error(), c)
+	} else if len(list) < 1 {
+		// 前端项目这里有一个取数逻辑，如果数组为空，数组需要为[] 不能是Null
+		response.OkWithDetailed(response.PageResult{
+			List:       make([]interface{}, 0),
+			TotalCount: total,
+			CurrPage:   pageNumber,
+			PageSize:   5,
+		}, "SUCCESS", c)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:       list,
+			TotalCount: total,
+			CurrPage:   pageNumber,
+			PageSize:   5,
+		}, "SUCCESS", c)
+	}
+
+}
+```
+
+#### 4.9.2 订单数据库操作
+
+```golang
+package mall
+
+import (
+	"Graduation/global"
+	"Graduation/model/mall"
+	"Graduation/model/mall/response"
+	"Graduation/model/manage"
+	"Graduation/model/manage/request"
+	"Graduation/utils"
+	"Graduation/utils/enum"
+	"errors"
+
+	"github.com/jinzhu/copier"
+
+	"time"
+)
+
+type MallOrderService struct {
+}
+
+// SaveOrder 保存订单
+func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddress, shopCartItems []response.CartItemResponse) (err error, orderNo string) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("不存在的用户"), orderNo
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	var itemIdList []int
+	var goodsIds []int
+	for _, cartItem := range shopCartItems {
+		itemIdList = append(itemIdList, cartItem.CartItemId)
+		goodsIds = append(goodsIds, cartItem.GoodsId)
+	}
+	var mallGoods []manage.MallGoodsInfo
+	global.GVA_DB.Where("goods_id in ? ", goodsIds).Find(&mallGoods)
+	//检查是否包含已下架商品
+	for _, mallGood := range mallGoods {
+		if mallGood.GoodsSellStatus != enum.GOODS_UNDER.Code() {
+			return errors.New("已下架，无法生成订单"), orderNo
+		}
+	}
+	mallGoodsMap := make(map[int]manage.MallGoodsInfo)
+	for _, mallGood := range mallGoods {
+		mallGoodsMap[mallGood.GoodsId] = mallGood
+	}
+	//判断商品库存
+	for _, shopCartItemVO := range shopCartItems {
+		//查出的商品中不存在购物车中的这条关联商品数据，直接返回错误提醒
+		if _, ok := mallGoodsMap[shopCartItemVO.GoodsId]; !ok {
+			return errors.New("购物车数据异常！"), orderNo
+		}
+		if shopCartItemVO.GoodsCount > mallGoodsMap[shopCartItemVO.GoodsId].StockNum {
+			return errors.New("库存不足！"), orderNo
+		}
+	}
+	// 删除购物项
+	if len(itemIdList) > 0 && len(goodsIds) > 0 {
+		if err = global.GVA_DB.Where("cart_item_id in ?", itemIdList).Updates(mall.MallShopCartItem{IsDeleted: 1}).Error; err == nil {
+			var stockNumDTOS []request.StockNumDTO
+			copier.Copy(&stockNumDTOS, &shopCartItems)
+			for _, stockNumDTO := range stockNumDTOS {
+				var goodsInfo manage.MallGoodsInfo
+				global.GVA_DB.Where("goods_id =?", stockNumDTO.GoodsId).First(&goodsInfo)
+				if err = global.GVA_DB.Where("goods_id =? and stock_num>= ? and goods_sell_status = 0", stockNumDTO.GoodsId, stockNumDTO.GoodsCount).Updates(manage.MallGoodsInfo{StockNum: goodsInfo.StockNum - stockNumDTO.GoodsCount}).Error; err != nil {
+					return errors.New("库存不足！"), orderNo
+				}
+			}
+			//生成订单号
+			orderNo = utils.GenOrderNo()
+			priceTotal := 0
+			//保存订单
+			var mallOrder manage.MallOrder
+			mallOrder.OrderNo = orderNo
+			mallOrder.UUid = uuid
+			//总价
+			for _, mallShopCartItemVO := range shopCartItems {
+				priceTotal = priceTotal + mallShopCartItemVO.GoodsCount*mallShopCartItemVO.SellingPrice
+			}
+			if priceTotal < 1 {
+				return errors.New("订单价格异常！"), orderNo
+			}
+			mallOrder.TotalPrice = priceTotal
+			mallOrder.ExtraInfo = ""
+			//生成订单项并保存订单项纪录
+			if err = global.GVA_DB.Save(&mallOrder).Error; err != nil {
+				return errors.New("订单入库失败！"), orderNo
+			}
+			//生成订单收货地址快照，并保存至数据库
+			var mallOrderAddress mall.MallOrderAddress
+			copier.Copy(&mallOrderAddress, &userAddress)
+			mallOrderAddress.OrderId = mallOrder.OrderId
+			//生成所有的订单项快照，并保存至数据库
+			var mallOrderItems []manage.MallOrderItem
+			for _, mallShoppingCartItemVO := range shopCartItems {
+				var mallOrderItem manage.MallOrderItem
+				copier.Copy(&mallOrderItem, &mallShoppingCartItemVO)
+				mallOrderItem.OrderId = mallOrder.OrderId
+				mallOrderItems = append(mallOrderItems, mallOrderItem)
+			}
+			if err = global.GVA_DB.Save(&mallOrderItems).Error; err != nil {
+				return err, orderNo
+			}
+		}
+	}
+	return
+}
+
+// PaySuccess 支付订单
+func (m *MallOrderService) PaySuccess(orderNo string, payType int) (err error) {
+	var mallOrder manage.MallOrder
+	err = global.GVA_DB.Where("order_no = ? and is_deleted=0 ", orderNo).First(&mallOrder).Error
+	if mallOrder != (manage.MallOrder{}) {
+		if mallOrder.OrderStatus != 0 {
+			return errors.New("订单状态异常！")
+		}
+		mallOrder.OrderStatus = enum.ORDER_PAID.Code()
+		mallOrder.PayType = payType
+		mallOrder.PayStatus = 1
+		localSH, _ := time.LoadLocation("Asia/Shanghai")
+		mallOrder.PayTime = time.Now().In(localSH)
+		err = global.GVA_DB.Save(&mallOrder).Error
+	}
+	return
+}
+
+// FinishOrder 完结订单
+func (m *MallOrderService) FinishOrder(token string, orderNo string) (err error) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("不存在的用户")
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	var mallOrder manage.MallOrder
+	if err = global.GVA_DB.Where("order_no=? and is_deleted = 0", orderNo).First(&mallOrder).Error; err != nil {
+		return errors.New("未查询到记录！")
+	}
+	if mallOrder.UUid != uuid {
+		return errors.New("未查询到您的信息,禁止该操作！")
+	}
+	mallOrder.OrderStatus = enum.ORDER_SUCCESS.Code()
+	err = global.GVA_DB.Save(&mallOrder).Error
+	return
+}
+
+// CancelOrder 关闭订单
+func (m *MallOrderService) CancelOrder(token string, orderNo string) (err error) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("不存在的用户")
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	var mallOrder manage.MallOrder
+	if err = global.GVA_DB.Where("order_no=? and is_deleted = 0", orderNo).First(&mallOrder).Error; err != nil {
+		return errors.New("未查询到记录！")
+	}
+	if mallOrder.UUid != uuid {
+		return errors.New("未查询到您的信息,禁止该操作！")
+	}
+	if utils.NumsInList(mallOrder.OrderStatus, []int{enum.ORDER_SUCCESS.Code(),
+		enum.ORDER_CLOSED_BY_MALLUSER.Code(), enum.ORDER_CLOSED_BY_EXPIRED.Code(), enum.ORDER_CLOSED_BY_JUDGE.Code()}) {
+		return errors.New("订单状态异常！")
+	}
+	mallOrder.OrderStatus = enum.ORDER_CLOSED_BY_MALLUSER.Code()
+	err = global.GVA_DB.Save(&mallOrder).Error
+	return
+}
+
+// GetOrderDetailByOrderNo 获取订单详情
+func (m *MallOrderService) GetOrderDetailByOrderNo(token string, orderNo string) (err error, orderDetail response.MallOrderDetailVO) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("不存在的用户"), orderDetail
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	var mallOrder manage.MallOrder
+	if err = global.GVA_DB.Where("order_no=? and is_deleted = 0", orderNo).First(&mallOrder).Error; err != nil {
+		return errors.New("未查询到记录！"), orderDetail
+	}
+	if mallOrder.UUid != uuid {
+		return errors.New("未查询到您的信息,禁止该操作！"), orderDetail
+	}
+	var orderItems []manage.MallOrderItem
+	err = global.GVA_DB.Where("order_id = ?", mallOrder.OrderId).Find(&orderItems).Error
+	if len(orderItems) <= 0 {
+		return errors.New("订单项不存在！"), orderDetail
+	}
+
+	var mallOrderItemVOS []response.MallOrderItemVO
+	copier.Copy(&mallOrderItemVOS, &orderItems)
+	copier.Copy(&orderDetail, &mallOrder)
+	// 订单状态前端显示为中文
+	_, OrderStatusStr := enum.GetMallOrderStatusEnumByStatus(orderDetail.OrderStatus)
+	_, payTapStr := enum.GetMallOrderStatusEnumByStatus(orderDetail.PayType)
+	orderDetail.OrderStatusString = OrderStatusStr
+	orderDetail.PayTypeString = payTapStr
+	orderDetail.NewBeeMallOrderItemVOS = mallOrderItemVOS
+
+	return
+}
+
+// MallOrderListBySearch 搜索订单
+func (m *MallOrderService) MallOrderListBySearch(token string, pageNumber int, status string) (err error, list []response.MallOrderResponse, total int64) {
+	// 判断用户是否存在
+	if !IsUserExist(token) {
+		return errors.New("不存在的用户"), list, total
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	// 根据搜索条件查询
+	var mallOrders []manage.MallOrder
+	db := global.GVA_DB.Model(&mallOrders)
+	if status != "" {
+		db.Where("order_status = ?", status)
+	}
+	err = db.Where("u_uid =? and is_deleted=0 ", uuid).Count(&total).Error
+	// 这里前段没有做滚动加载，直接显示全部订单
+	// limit := 5
+	offset := 5 * (pageNumber - 1)
+	err = db.Offset(offset).Order(" order_id desc").Find(&mallOrders).Error
+	var orderListVOS []response.MallOrderResponse
+	if total > 0 {
+		//数据转换 将实体类转成vo
+		copier.Copy(&orderListVOS, &mallOrders)
+		//设置订单状态中文显示值
+		for _, newBeeMallOrderListVO := range orderListVOS {
+			_, statusStr := enum.GetMallOrderStatusEnumByStatus(newBeeMallOrderListVO.OrderStatus)
+			newBeeMallOrderListVO.OrderStatusString = statusStr
+		}
+		// 返回订单id
+		var orderIds []int
+		for _, order := range mallOrders {
+			orderIds = append(orderIds, order.OrderId)
+		}
+		//获取OrderItem
+		var orderItems []manage.MallOrderItem
+		if len(orderIds) > 0 {
+			global.GVA_DB.Where("order_id in ?", orderIds).Find(&orderItems)
+			itemByOrderIdMap := make(map[int][]manage.MallOrderItem)
+			for _, orderItem := range orderItems {
+				itemByOrderIdMap[orderItem.OrderId] = []manage.MallOrderItem{}
+			}
+			for k, v := range itemByOrderIdMap {
+				for _, orderItem := range orderItems {
+					if k == orderItem.OrderId {
+						v = append(v, orderItem)
+					}
+					itemByOrderIdMap[k] = v
+				}
+			}
+			//封装每个订单列表对象的订单项数据
+			for _, mallOrderListVO := range orderListVOS {
+				if _, ok := itemByOrderIdMap[mallOrderListVO.OrderId]; ok {
+					orderItemListTemp := itemByOrderIdMap[mallOrderListVO.OrderId]
+					var newBeeMallOrderItemVOS []response.MallOrderItemVO
+					copier.Copy(&newBeeMallOrderItemVOS, &orderItemListTemp)
+					mallOrderListVO.NewBeeMallOrderItemVOS = newBeeMallOrderItemVOS
+					_, OrderStatusStr := enum.GetMallOrderStatusEnumByStatus(mallOrderListVO.OrderStatus)
+					mallOrderListVO.OrderStatusString = OrderStatusStr
+					list = append(list, mallOrderListVO)
+				}
+			}
+		}
+	}
+	return err, list, total
+}
+```
+
+## 5. 后台管理系统
+
+### 5.1. 管理员相关基础操作
+
+#### 5.1.1. 管理员的登录和修改信息
+
+```golang
+package manage
+
+import (
+	"Graduation/global"
+	"Graduation/model/common/request"
+	"Graduation/model/common/response"
+	req "Graduation/model/manage/request"
+	"strconv"
+
+	// "Graduation/model/manage/"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type ManageAdminUserApi struct {
+}
+
+// 管理员用户登录(包括超级管理员)
+// AdminLogin 管理员登陆
+func (m *ManageAdminUserApi) ManageLogin(c *gin.Context) {
+	var manageLoginParams req.ManageLoginParam
+	_ = c.ShouldBindJSON(&manageLoginParams)
+	if err, msg, token := manageUserService.ManageLogin(manageLoginParams); msg == "Ban" {
+		response.FailWithMessage("抱歉,您已被禁用,请联系超级管理员解除!", c)
+	} else if err != nil {
+		response.FailWithMessage("登陆失败,请检查账号密码是否正确!", c)
+	} else {
+		response.OkWithData(token, c)
+	}
+}
+
+// 管理员用户退出(包括超级管理员)
+// AdminLogout 管理员登出
+func (m *ManageAdminUserApi) ManageLogout(c *gin.Context) {
+	token := c.GetHeader("token")
+	if err := manageUserService.DeleteManageUserToken(token); err != nil {
+		response.FailWithMessage("登出失败", c)
+	} else {
+		response.OkWithMessage("登出成功", c)
+	}
+}
+
+// 管理员信息显示
+// AdminUserProfile 用id查询AdminUser
+func (m *ManageAdminUserApi) ManageUserInfo(c *gin.Context) {
+	token := c.GetHeader("token")
+	if err, mallAdminUser := manageUserService.GetManageUserInfo(token); err != nil {
+		global.GVA_LOG.Error("未查询到管理员信息记录", zap.Error(err))
+		response.FailWithMessage("未查询到管理员信息记录", c)
+	} else {
+		// 扰乱加密,防止泄露
+		mallAdminUser.LoginPassword = "******"
+		response.OkWithData(mallAdminUser, c)
+	}
+}
+
+// 修改昵称
+func (m *ManageAdminUserApi) UpdateManageUserNickName(c *gin.Context) {
+	var reqs req.ManageUpdateNameParam
+	_ = c.ShouldBindJSON(&reqs)
+	token := c.GetHeader("token")
+	if err := manageUserService.UpdateManageUserNickName(token, reqs); err != nil {
+		global.GVA_LOG.Error("更新管理员用户昵称失败!", zap.Error(err))
+		response.FailWithMessage("更新管理员用户昵称失败", c)
+	} else {
+		response.OkWithMessage("更新管理员用户昵称成功", c)
+	}
+}
+
+// 修改密码
+func (m *ManageAdminUserApi) UpdateManageUserPassword(c *gin.Context) {
+	var reqs req.ManageUpdatePasswordParam
+	_ = c.ShouldBindJSON(&reqs)
+	userToken := c.GetHeader("token")
+	if err := manageUserService.UpdateManagePassWord(userToken, reqs); err != nil {
+		global.GVA_LOG.Error("更新密码失败!", zap.Error(err))
+		response.FailWithMessage("更新密码失败:"+err.Error(), c)
+	} else {
+		response.OkWithMessage("更新密码成功", c)
+	}
+}
+
+// 用户商家列表显示
+// UserList 商城注册商家用户列表
+func (m *ManageAdminUserApi) UserList(c *gin.Context) {
+	var pageInfo req.MallUserSearch
+	_ = c.ShouldBindQuery(&pageInfo)
+	if err, list, total := manageUserService.GetManageUserInfoList(pageInfo); err != nil {
+		global.GVA_LOG.Error("获取管理员用户失败!", zap.Error(err))
+		response.FailWithMessage("获取管理员用户失败", c)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:       list,
+			TotalCount: total,
+			CurrPage:   pageInfo.PageNumber,
+			PageSize:   pageInfo.PageSize,
+		}, "获取管理员用户成功", c)
+	}
+}
+
+// LockUser 用户禁用[0]与解除禁用[1](0-未锁定 1-已锁定)
+func (m *ManageAdminUserApi) LockUser(c *gin.Context) {
+	lockStatus, _ := strconv.Atoi(c.Param("lockStatus"))
+	var IDS request.IdsReq
+	_ = c.ShouldBindJSON(&IDS)
+	if err := manageUserService.LockUser(IDS, lockStatus); err != nil {
+		global.GVA_LOG.Error("更新失败!", zap.Error(err))
+		response.FailWithMessage("更新失败", c)
+	} else {
+		response.OkWithMessage("更新成功", c)
+	}
+}
+
+```
+
+
+#### 5.1.2. 管理员增删改查的数据库
+
+```golang
+package manage
+
+import (
+	"Graduation/global"
+	"Graduation/model/common/request"
+	"Graduation/model/mall"
+	mag "Graduation/model/manage"
+	req "Graduation/model/manage/request"
+	mallservice "Graduation/service/mall"
+	"Graduation/utils"
+	"errors"
+	"fmt"
+	"time"
+)
+
+type ManageUserService struct {
+}
+
+// 管理员用户登录以及超级管理员登录
+func (m *ManageUserService) ManageLogin(req req.ManageLoginParam) (err error, msg string, token string) {
+	var mallAdminUser mag.MallAdminUser
+	// 管理员就是用户(先查用户表,用户表不存在,则无法登陆,用户表存在则加入管理员账户)
+	var user mall.MallUser
+	err = global.GVA_DB.Where("login_name=? AND password_md5=?", req.UserName, req.PasswordMd5).First(&user).Error
+	if err != nil || user == (mall.MallUser{}) {
+		return err, "不存在用户,请注册成为商城用户后才有权限登录", token
+	}
+	// 查询到用户已存在,
+	// 判断是否已经加入到管理员表
+	err = global.GVA_DB.Where("login_user_name=? AND login_password=?", req.UserName, req.PasswordMd5).First(&mallAdminUser).Error
+	if mallAdminUser == (mag.MallAdminUser{}) {
+		// 没加入 则将用户信息加入到管理员信息表super_admin_user
+		{
+			mallAdminUser.UUid = user.UUid
+			mallAdminUser.LoginUserName = user.LoginName
+			mallAdminUser.LoginPassword = user.PasswordMd5
+			mallAdminUser.NickName = user.NickName
+			mallAdminUser.IsSuperAdmin = 0 // 普通管理员
+
+		}
+	}
+	// 更新管理员表和用户表锁定状态相同
+	mallAdminUser.Locked = user.LockedFlag
+	// 如果用户被禁,则无法登陆后台管理员系统
+	if mallAdminUser.Locked == 1 {
+		// 但仍然需要更新用户信息数据
+		err = global.GVA_DB.Save(&mallAdminUser).Error
+		return err, "Ban", token
+	}
+	// 创建token
+	token, _ = utils.CreateToken(user.UUid)
+	strUuid := fmt.Sprintf("%d", user.UUid)
+	err = global.GVA_REDIS.Set(global.GVA_CTX, strUuid, token, 3600*time.Second).Err()
+	if err != nil {
+		global.GVA_LOG.Error("redis存储token失败")
+		return err, msg, token
+	} else {
+		global.GVA_LOG.Info("redis存储token成功")
+	}
+	err = global.GVA_DB.Save(&mallAdminUser).Error
+	return
+
+}
+
+// 管理员以及超级管理员登出,删除管理员登陆token
+func (m *ManageUserService) DeleteManageUserToken(token string) (err error) {
+	uuid, err, ok := utils.UndoToken(token)
+	if err != nil && ok == 0 { // 解码token出现错误
+		return err
+	}
+	uid := fmt.Sprintf("%d", uuid)
+	if ok == 1 { // 超时 token已经失效
+		global.GVA_REDIS.Del(global.GVA_CTX, uid)
+		return nil
+	}
+	_, err = global.GVA_REDIS.Get(global.GVA_CTX, uid).Result()
+	if err != nil {
+		global.GVA_LOG.Error("无法从redis得到对应uid的token信息,可能不存在")
+		return err
+	}
+	// 存在则删除
+	global.GVA_REDIS.Del(global.GVA_CTX, uid)
+	return nil
+}
+
+// 检查管理员token是否存在
+func (m *ManageUserService) ExistManageToken(token string) (err error, tm int64) {
+	uuid, err, ok := utils.UndoToken(token)
+	if err != nil && ok == 0 { // 解码token出现错误
+		return err, 0
+	}
+	uid := fmt.Sprintf("%d", uuid)
+	_, err = global.GVA_REDIS.Get(global.GVA_CTX, uid).Result()
+	if err != nil {
+		global.GVA_LOG.Error("token不存在")
+		return err, 0
+	}
+	if ok == 1 {
+		global.GVA_LOG.Info("token已超时")
+		return err, 1
+	}
+	return nil, 2
+}
+
+// 获取登录管理员和超级管理员的信息
+func (m *ManageUserService) GetManageUserInfo(token string) (err error, mallAdminUser mag.MallAdminUser) {
+	// 判断用户是否存在
+	if !mallservice.IsUserExist(token) {
+		return errors.New("不存在的用户"), mallAdminUser
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	err = global.GVA_DB.Where("u_uid = ?", uuid).First(&mallAdminUser).Error
+	return err, mallAdminUser
+}
+
+// 判断是否是超级管理员
+func (m *ManageUserService) IsSuperManageAdmin(token string) (err error, ok bool) {
+	// 判断用户是否存在
+	if !mallservice.IsUserExist(token) {
+		return errors.New("不存在的用户"), false
+	}
+	var mallAdminUser mag.MallAdminUser
+	uuid, _, _ := utils.UndoToken(token)
+	err = global.GVA_DB.Where("u_uid = ? And is_super_admin = 1", uuid).First(&mallAdminUser).Error
+	if err != nil {
+		return err, false
+	}
+	// 不为空结构体,证明查询到内容
+	if mallAdminUser != (mag.MallAdminUser{}) {
+		return nil, true
+	}
+	return nil, false
+}
+
+// 更新管理员用户昵称
+func (m *ManageUserService) UpdateManageUserNickName(token string, reqs req.ManageUpdateNameParam) (err error) {
+	// 判断用户是否存在
+	if !mallservice.IsUserExist(token) {
+		return errors.New("不存在的用户")
+	}
+	uuid, _, _ := utils.UndoToken(token)
+	// 更新管理员表的昵称
+	if err = global.GVA_DB.Where("u_uid = ?", uuid).Updates(&mag.MallAdminUser{
+		NickName: reqs.NickName,
+	}).Error; err != nil {
+		return err
+	}
+
+	// 更新用户表里的昵称
+	if err = global.GVA_DB.Where("u_uid = ?", uuid).Updates(&mall.MallUser{
+		NickName: reqs.NickName,
+	}).Error; err != nil {
+		return err
+	}
+	return
+
+}
+
+// 更新管理员用户密码
+func (m *ManageUserService) UpdateManagePassWord(token string, reqs req.ManageUpdatePasswordParam) (err error) {
+	// 判断用户是否存在
+	if !mallservice.IsUserExist(token) {
+		return errors.New("不存在的用户")
+	}
+	var adminUser mag.MallAdminUser
+	uuid, _, _ := utils.UndoToken(token)
+	err = global.GVA_DB.Where("u_uid =?", uuid).First(&adminUser).Error
+	if err != nil {
+		return errors.New("不存在的管理员用户")
+	}
+	if adminUser.LoginPassword != reqs.OriginalPassword {
+		return errors.New("原密码不正确")
+	}
+	if reqs.NewPassword == "" {
+		return errors.New("密码不能为空")
+	}
+	adminUser.LoginPassword = reqs.NewPassword
+	// 更新管理员表
+	if err = global.GVA_DB.Where("u_uid=?", uuid).Updates(&adminUser).Error; err != nil {
+		return
+	}
+	// 更新用户表
+	var userInfo mall.MallUser
+	if err = global.GVA_DB.Where("u_uid =?", uuid).First(&userInfo).Error; err != nil {
+		return errors.New("管理员用户密码更新失败")
+	}
+	userInfo.PasswordMd5 = reqs.NewPassword
+	err = global.GVA_DB.Save(&userInfo).Error
+	return
+
+}
+
+// 查看用户管理员的信息列表
+// GetManageUserInfoList 分页获取商城注册用户即管理员列表
+func (m *ManageUserService) GetManageUserInfoList(info req.MallUserSearch) (err error, list interface{}, total int64) {
+	limit := info.PageSize
+	offset := info.PageSize * (info.PageNumber - 1)
+	// 创建db
+	db := global.GVA_DB.Model(&mall.MallUser{})
+	var mallUsers []mall.MallUser
+	// 如果有条件搜索 下方会自动创建搜索语句
+	err = db.Count(&total).Error
+	if err != nil {
+		return
+	}
+	err = db.Limit(limit).Offset(offset).Order("created_at desc").Find(&mallUsers).Error
+	return err, mallUsers, total
+}
+
+// LockUser 超级管理员修改管理员用户状态
+func (m *ManageUserService) LockUser(idReq request.IdsReq, lockStatus int) (err error) {
+	// 0 正常,1 禁止
+	if lockStatus != 0 && lockStatus != 1 {
+		return errors.New("操作非法！")
+	}
+	// 更新 用户表 UpdateColumns locked_flag
+	err = global.GVA_DB.Model(&mall.MallUser{}).Where("user_id in ?", idReq.Ids).Update("locked_flag", lockStatus).Error
+	return err
+}
+
+```
+
+### 5.2. 区块链的使用
 
 
 
