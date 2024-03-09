@@ -17,14 +17,13 @@ func (r *ManageGoodsCategoryRouter) ApiManageGoodsCategoryRouter(Router *gin.Rou
 	var goodsCategoryApi = v1.ApiGroupApp.ManageApiGroup.ManageGoodsCategoryApi
 	{
 		goodsCategoryRouter.GET("categories", goodsCategoryApi.GetCategoryList) // 获取分类数据列表
-
-		// goodsCategoryRouter.PUT("categories", goodsCategoryApi.UpdateCategory)
-		// goodsCategoryRouter.GET("categories/:id", goodsCategoryApi.GetCategory)
-		// goodsCategoryRouter.DELETE("categories", goodsCategoryApi.DelCategory)
 		// goodsCategoryRouter.GET("categories4Select", goodsCategoryApi.ListForSelect)
 	}
 	// 超级管理员
 	{
 		superGoodsCategoryRouter.POST("categories", goodsCategoryApi.CreateCategory) // 创建商品种类分类
+		superGoodsCategoryRouter.GET("categories/:id", goodsCategoryApi.GetCategory) // 获取单个商品登记分类信息
+		superGoodsCategoryRouter.PUT("categories", goodsCategoryApi.UpdateCategory)  // 修改商品等级分类信息
+		superGoodsCategoryRouter.DELETE("categories", goodsCategoryApi.DelCategory)  // 删除(禁用)商品种类信息
 	}
 }
