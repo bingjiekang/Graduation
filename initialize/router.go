@@ -32,7 +32,8 @@ func Routers() *gin.Engine {
 	// 分组
 	ManageGroup := Router.Group("manage-api")
 	{
-		manageRouter.ApiManageAdminUserRouter(ManageGroup) // 管理员和超级管理员操作
+		manageRouter.ApiManageAdminUserRouter(ManageGroup)     // 管理员和超级管理员操作
+		manageRouter.ApiManageGoodsCategoryRouter(ManageGroup) // 商品分类
 	}
 	return Router
 }

@@ -4,8 +4,10 @@ import "Graduation/service"
 
 type ManageGroup struct {
 	ManageAdminUserApi
+	ManageGoodsCategoryApi
 }
 
 var (
-	manageUserService = service.ServiceGroupApp.ManageServiceGroup.ManageUserService // 管理员以及超级管理员操作
+	manageUserService        = service.ServiceGroupApp.ManageServiceGroup.ManageUserService          // 管理员以及超级管理员操作
+	mallGoodsCategoryService = service.ServiceGroupApp.ManageServiceGroup.ManageGoodsCategoryService // 分类商品管理
 )
