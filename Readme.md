@@ -24,6 +24,12 @@
 go get -u github.com/gin-gonic/gin
 ```
 
+### 2.2. 使用go-fastdfs 文件存储系统，存储照片
+
+	1. wget --no-check-certificate  https://github.com/sjqzhang/go-fastdfs/releases/download/v1.4.5/fileserver -O fileserver && chmod +x fileserver && ./	fileserver
+	2. 
+
+
 ## 3.确定项目目录
 
 

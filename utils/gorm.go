@@ -3,6 +3,7 @@ package utils
 import (
 	"Graduation/global"
 	internalmysql "Graduation/initialize/internalMysql"
+	"Graduation/model/common"
 	"Graduation/model/mall"
 	"Graduation/model/manage"
 
@@ -52,7 +53,8 @@ func InitGormMysql() *gorm.DB {
 		}
 		// 后台管理系统
 		{
-			db.AutoMigrate(&manage.MallAdminUser{}) // 管理员和超级管理员信息表
+			db.AutoMigrate(&manage.MallAdminUser{})         // 管理员和超级管理员信息表
+			db.AutoMigrate(&common.FileUploadAndDownload{}) // 图片路径存储
 		}
 		// db.AutoMigrate(&users.UserTrade{})
 		global.GVA_LOG.Info("数据库连接成功!")

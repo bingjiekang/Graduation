@@ -1,15 +1,18 @@
 package initialize
 
 import (
+	"Graduation/global"
 	"Graduation/middleware"
 	"Graduation/router"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Routers() *gin.Engine {
 	var Router = gin.Default()
-
+	// 为用户头像和文件图片提供静态地址
+	Router.StaticFS(global.GVA_CONFIG.Local.Path, http.Dir(global.GVA_CONFIG.Local.Path))
 	// 如果有跨域则打开
 	Router.Use(middleware.CrossDomain())
 

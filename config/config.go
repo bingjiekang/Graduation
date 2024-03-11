@@ -7,5 +7,5 @@ type Server struct {
 	System System `mapstructure:"system" json:"system" yaml:"system"`
 	Redis  Redis  `mapstructure:"redis" json:"redis" yaml:"redis"`
 	// oss
-	// Local Local `mapstructure:"local" json:"local" yaml:"local"`
+	Local Local `mapstructure:"local" json:"local" yaml:"local"`
 }

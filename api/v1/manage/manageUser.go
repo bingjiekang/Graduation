@@ -2,6 +2,7 @@ package manage
 
 import (
 	"Graduation/global"
+	"Graduation/model/common"
 	"Graduation/model/common/request"
 	"Graduation/model/common/response"
 	req "Graduation/model/manage/request"
@@ -110,4 +111,25 @@ func (m *ManageAdminUserApi) LockUser(c *gin.Context) {
 	} else {
 		response.OkWithMessage("更新成功", c)
 	}
+}
+
+// UploadFile 上传图片
+func (m *ManageAdminUserApi) UploadFile(c *gin.Context) {
+	var file common.FileUploadAndDownload
+	token := c.GetHeader("token")
+	noSave := c.DefaultQuery("noSave", "0")
+	_, header, err := c.Request.FormFile("file")
+	if err != nil {
+		global.GVA_LOG.Error("接收文件失败!", zap.Error(err))
+		response.FailWithMessage("接收文件失败", c)
+		return
+	}
+	err, file = fileUploadAndDownloadService.UploadFile(token, header, noSave) // 文件上传后拿到文件路径
+	if err != nil {
+		global.GVA_LOG.Error("修改数据库链接失败!", zap.Error(err))
+		response.FailWithMessage("修改数据库链接失败", c)
+		return
+	}
+	//这里直接使用本地的url
+	response.OkWithData("http://localhost:8080/"+file.Url, c)
 }
