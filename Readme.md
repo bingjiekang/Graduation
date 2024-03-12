@@ -17,17 +17,12 @@
 下载地址：https://golang.google.cn/dl/
 ```	
 
-### 2.1.确定使用Gin框架
+### 2.确定使用Gin框架
 
 ```golang
 // 下载GIn框架包
 go get -u github.com/gin-gonic/gin
 ```
-
-### 2.2. 使用go-fastdfs 文件存储系统，存储照片
-
-	1. wget --no-check-certificate  https://github.com/sjqzhang/go-fastdfs/releases/download/v1.4.5/fileserver -O fileserver && chmod +x fileserver && ./	fileserver
-	2. 
 
 
 ## 3.确定项目目录
@@ -2530,7 +2525,253 @@ func (m *ManageUserService) LockUser(idReq request.IdsReq, lockStatus int) (err 
 
 ```
 
-### 5.2. 区块链的使用
+### 5.2. 首页配置
+
+#### 5.2.1 轮播图配置
+
+```golang
+package manage
+
+import (
+	"Graduation/global"
+	"Graduation/model/common/request"
+	"Graduation/model/common/response"
+	requ "Graduation/model/manage/request"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type ManageCarouselApi struct {
+}
+
+// 创建轮播图
+func (m *ManageCarouselApi) CreateCarousel(c *gin.Context) {
+	var req requ.MallCarouselAddParam
+	_ = c.ShouldBindJSON(&req)
+	if err := mallCarouselService.CreateCarousel(req); err != nil {
+		global.GVA_LOG.Error("创建失败!", zap.Error(err))
+		response.FailWithMessage("创建失败"+err.Error(), c)
+	} else {
+		response.OkWithMessage("创建成功", c)
+	}
+}
+
+// 显示轮播图列表
+// GetCarouselList 分页获取MallCarousel列表
+func (m *ManageCarouselApi) GetCarouselList(c *gin.Context) {
+	var pageInfo requ.MallCarouselSearch
+	_ = c.ShouldBindQuery(&pageInfo)
+	if err, list, total := mallCarouselService.GetCarouselInfoList(pageInfo); err != nil {
+		global.GVA_LOG.Error("获取轮播图列表失败!"+err.Error(), zap.Error(err))
+		response.FailWithMessage("获取轮播图列表失败", c)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:       list,
+			TotalCount: total,
+			CurrPage:   pageInfo.PageNumber,
+			PageSize:   pageInfo.PageSize,
+		}, "获取成功", c)
+	}
+}
+
+// FindMallCarousel 用id查询MallCarousel
+func (m *ManageCarouselApi) FindCarousel(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err, mallCarousel := mallCarouselService.GetCarousel(id); err != nil {
+		global.GVA_LOG.Error("查询指定轮播图id内容失败!"+err.Error(), zap.Error(err))
+		response.FailWithMessage("查询指定轮播图id内容失败", c)
+	} else {
+		response.OkWithData(mallCarousel, c)
+	}
+}
+
+// 修改轮播图内容
+func (m *ManageCarouselApi) UpdateCarousel(c *gin.Context) {
+	var req requ.MallCarouselUpdateParam
+	_ = c.ShouldBindJSON(&req)
+	if err := mallCarouselService.UpdateCarousel(req); err != nil {
+		global.GVA_LOG.Error("更新轮播图失败!", zap.Error(err))
+		response.FailWithMessage("更新轮播图失败:"+err.Error(), c)
+	} else {
+		response.OkWithMessage("更新轮播图成功", c)
+	}
+}
+
+// 删除轮播图内容
+func (m *ManageCarouselApi) DeleteCarousel(c *gin.Context) {
+	var ids request.IdsReq
+	_ = c.ShouldBindJSON(&ids)
+	if err := mallCarouselService.DeleteCarousel(ids); err != nil {
+		global.GVA_LOG.Error("删除轮播图失败!", zap.Error(err))
+		response.FailWithMessage("删除轮播图失败"+err.Error(), c)
+	} else {
+		response.OkWithMessage("删除轮播图成功", c)
+	}
+}
+
+```
+
+#### 5.2.2. 轮播图对应数据库操作
+
+```golang
+package manage
+
+import (
+	v1 "Graduation/api/v1"
+	"Graduation/middleware"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ManageCarouselRouter struct {
+}
+
+// 首页轮播图相关
+func (r *ManageCarouselRouter) ApiManageCarouselRouter(Router *gin.RouterGroup) {
+	carouselRouter := Router.Group("v1").Use(middleware.AdminJWTAuth())
+	superCarouselRouter := Router.Group("v1").Use(middleware.AdminJWTAuth(), middleware.SuperAdminJWTAuth()) // 验证超级管理员权限
+	var mallCarouselApi = v1.ApiGroupApp.ManageApiGroup.ManageCarouselApi
+	// 普通管理员
+	{
+		carouselRouter.GET("carousels", mallCarouselApi.GetCarouselList) // 获取轮播图列表
+	}
+	// 超级管理员
+	{
+		superCarouselRouter.POST("carousels", mallCarouselApi.CreateCarousel)   // 新建MallCarousel
+		superCarouselRouter.GET("carousels/:id", mallCarouselApi.FindCarousel)  // 根据ID获取轮播图
+		superCarouselRouter.PUT("carousels", mallCarouselApi.UpdateCarousel)    // 更新MallCarousel
+		superCarouselRouter.DELETE("carousels", mallCarouselApi.DeleteCarousel) // 删除MallCarousel
+	}
+}
+```
+
+#### 5.2.3. 首页热销商品、新品上市、商品推荐配置
+
+```golang
+package manage
+
+import (
+	"Graduation/global"
+	requ "Graduation/model/common/request"
+	"Graduation/model/common/response"
+	"Graduation/model/manage/request"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type ManageIndexConfigApi struct {
+}
+
+// 创建对应热销/新品/商品推荐配置
+func (m *ManageIndexConfigApi) CreateIndexConfig(c *gin.Context) {
+	var req request.MallIndexConfigAddParams
+	_ = c.ShouldBindJSON(&req)
+	if err := mallIndexConfigService.CreateMallIndexConfig(req); err != nil {
+		global.GVA_LOG.Error("创建失败!", zap.Error(err))
+		response.FailWithMessage("创建失败"+err.Error(), c)
+	} else {
+		response.OkWithMessage("创建成功", c)
+	}
+}
+
+// 获取对应热销/新品/商品推荐 列表信息
+func (m *ManageIndexConfigApi) GetIndexConfigList(c *gin.Context) {
+	var pageInfo request.MallIndexConfigSearch
+	_ = c.ShouldBindQuery(&pageInfo)
+	if err, list, total := mallIndexConfigService.GetMallIndexConfigInfoList(pageInfo); err != nil {
+		global.GVA_LOG.Error("获取失败!"+err.Error(), zap.Error(err))
+		response.FailWithMessage("获取失败", c)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:       list,
+			TotalCount: total,
+			CurrPage:   pageInfo.PageNumber,
+			PageSize:   pageInfo.PageSize,
+		}, "获取成功", c)
+	}
+}
+
+// 根据id获取对应信息
+func (m *ManageIndexConfigApi) FindIndexConfig(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	if err, mallIndexConfig := mallIndexConfigService.GetMallIndexConfig(uint(id)); err != nil {
+		global.GVA_LOG.Error("查询失败!"+err.Error(), zap.Error(err))
+		response.FailWithMessage("查询失败", c)
+	} else {
+		response.OkWithData(mallIndexConfig, c)
+	}
+}
+
+// 更新对应商品配置信息
+func (m *ManageIndexConfigApi) UpdateIndexConfig(c *gin.Context) {
+	var req request.MallIndexConfigUpdateParams
+	_ = c.ShouldBindJSON(&req)
+	if err := mallIndexConfigService.UpdateMallIndexConfig(req); err != nil {
+		global.GVA_LOG.Error("更新失败!", zap.Error(err))
+		response.FailWithMessage("更新失败:"+err.Error(), c)
+	} else {
+		response.OkWithMessage("更新成功", c)
+	}
+}
+
+// 删除对应商品信息
+func (m *ManageIndexConfigApi) DeleteIndexConfig(c *gin.Context) {
+	var ids requ.IdsReq
+	_ = c.ShouldBindJSON(&ids)
+	if err := mallIndexConfigService.DeleteMallIndexConfig(ids); err != nil {
+		global.GVA_LOG.Error("删除失败!", zap.Error(err))
+		response.FailWithMessage("删除失败"+err.Error(), c)
+	} else {
+		response.OkWithMessage("删除成功", c)
+	}
+}
+```
+
+#### 5.2.4. 首页热销商品、新品上市、商品推荐 后端数据库操作
+
+```golang
+package manage
+
+import (
+	v1 "Graduation/api/v1"
+	"Graduation/middleware"
+
+	"github.com/gin-gonic/gin"
+)
+
+type ManageIndexConfigRouter struct {
+}
+
+func (r *ManageIndexConfigRouter) ApiManageIndexConfigRouter(Router *gin.RouterGroup) {
+	indexConfigRouter := Router.Group("v1").Use(middleware.AdminJWTAuth())
+	superIndexConfigRouter := Router.Group("v1").Use(middleware.AdminJWTAuth(), middleware.SuperAdminJWTAuth()) // 验证超级管理员权限
+
+	var mallIndexConfigApi = v1.ApiGroupApp.ManageApiGroup.ManageIndexConfigApi
+	// 普通管理员
+	{
+		indexConfigRouter.GET("indexConfigs", mallIndexConfigApi.GetIndexConfigList) // 获取MallIndexConfig列表
+	}
+	// 超级管理员
+	{
+		superIndexConfigRouter.POST("indexConfigs", mallIndexConfigApi.CreateIndexConfig)        // 新建MallIndexConfig
+		superIndexConfigRouter.GET("indexConfigs/:id", mallIndexConfigApi.FindIndexConfig)       // 根据ID获取MallIndexConfig
+		superIndexConfigRouter.PUT("indexConfigs", mallIndexConfigApi.UpdateIndexConfig)         // 更新MallIndexConfig
+		superIndexConfigRouter.POST("indexConfigs/delete", mallIndexConfigApi.DeleteIndexConfig) // 删除MallIndexConfig
+	}
+
+}
+```
+
+### 5.3. 商品配置
+
+
+
+
+### 5.4. 订单配置
 
 
 

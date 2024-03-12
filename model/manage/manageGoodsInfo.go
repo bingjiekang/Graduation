@@ -6,6 +6,7 @@ import "time"
 // MallGoodsInfo 结构体
 type MallGoodsInfo struct {
 	GoodsId            int       `json:"goodsId" form:"goodsId" gorm:"primarykey;AUTO_INCREMENT"`
+	UUid               int64     `json:"uUid" form:"uUid" gorm:"column:u_uid;comment:唯一标识商家id"`
 	GoodsName          string    `json:"goodsName" form:"goodsName" gorm:"column:goods_name;comment:商品名;type:varchar(200);"`
 	GoodsIntro         string    `json:"goodsIntro" form:"goodsIntro" gorm:"column:goods_intro;comment:商品简介;type:varchar(200);"`
 	GoodsCategoryId    int       `json:"goodsCategoryId" form:"goodsCategoryId" gorm:"column:goods_category_id;comment:关联分类id;type:bigint"`
