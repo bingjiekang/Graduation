@@ -7,7 +7,6 @@ import (
 	requ "Graduation/model/manage/request"
 	"Graduation/utils"
 	"errors"
-	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -16,12 +15,18 @@ type ManageCarouselService struct {
 }
 
 // 创建轮播图
-func (m *ManageCarouselService) CreateCarousel(req requ.MallCarouselAddParam) (err error) {
-	carouseRank, _ := strconv.Atoi(req.CarouselRank)
+func (m *ManageCarouselService) CreateCarousel(token string, req requ.MallCarouselAddParam) (err error) {
+	uuid, _, _ := utils.UndoToken(token)
+	err = global.GVA_DB.Where("u_uid = ?", uuid).First(&manage.MallAdminUser{}).Error
+	if err != nil {
+		return errors.New("不存在的管理员用户")
+	}
+	carouseRank := utils.Transfer(req.CarouselRank)
 	mallCarousel := manage.MallCarousel{
 		CarouselUrl:  req.CarouselUrl,
 		RedirectUrl:  req.RedirectUrl,
 		CarouselRank: carouseRank,
+		CreateUser:   uuid,
 	}
 	// 这个校验理论上应该放在api层，但是因为前端的传值是string，而我们的校验规则是Int,所以只能转换格式后再校验
 	if err = utils.Verify(mallCarousel, utils.CarouselAddParamVerify); err != nil {
@@ -54,15 +59,21 @@ func (m *ManageCarouselService) GetCarousel(id int) (err error, mallCarousel man
 }
 
 // 修改指定轮播图内容
-func (m *ManageCarouselService) UpdateCarousel(req requ.MallCarouselUpdateParam) (err error) {
+func (m *ManageCarouselService) UpdateCarousel(token string, req requ.MallCarouselUpdateParam) (err error) {
 	if errors.Is(global.GVA_DB.Where("carousel_id = ?", req.CarouselId).First(&manage.MallCarousel{}).Error, gorm.ErrRecordNotFound) {
 		return errors.New("未查询到记录！")
 	}
-	carouseRank, _ := strconv.Atoi(req.CarouselRank)
+	uuid, _, _ := utils.UndoToken(token)
+	err = global.GVA_DB.Where("u_uid = ?", uuid).First(&manage.MallAdminUser{}).Error
+	if err != nil {
+		return errors.New("不存在的管理员用户")
+	}
+	carouseRank := utils.Transfer(req.CarouselRank)
 	mallCarousel := manage.MallCarousel{
 		CarouselUrl:  req.CarouselUrl,
 		RedirectUrl:  req.RedirectUrl,
 		CarouselRank: carouseRank,
+		CreateUser:   uuid,
 	}
 	// 这个校验理论上应该放在api层，但是因为前端的传值是string，而我们的校验规则是Int,所以只能转换格式后再校验
 	if err = utils.Verify(mallCarousel, utils.CarouselAddParamVerify); err != nil {

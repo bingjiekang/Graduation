@@ -39,6 +39,7 @@ func Routers() *gin.Engine {
 		manageRouter.ApiManageGoodsCategoryRouter(ManageGroup) // 商品分类
 		manageRouter.ApiManageCarouselRouter(ManageGroup)      // 轮播图路由获取
 		manageRouter.ApiManageIndexConfigRouter(ManageGroup)   // 商品首页热销/新品/商品推荐配置
+		manageRouter.ApiManageGoodsInfoRouter(ManageGroup)     // 商品信息
 	}
 	return Router
 }

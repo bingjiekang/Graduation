@@ -7,7 +7,6 @@ import (
 	"Graduation/model/manage/request"
 	"Graduation/utils"
 	"errors"
-	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -16,27 +15,29 @@ type ManageIndexConfigService struct {
 }
 
 // CreateMallIndexConfig 创建MallIndexConfig记录
-func (m *ManageIndexConfigService) CreateMallIndexConfig(req request.MallIndexConfigAddParams) (err error) {
+func (m *ManageIndexConfigService) CreateMallIndexConfig(token string, req request.MallIndexConfigAddParams) (err error) {
 	var goodsInfo manage.MallGoodsInfo
+	uuid, _, _ := utils.UndoToken(token)
+	err = global.GVA_DB.Where("u_uid =?", uuid).First(&manage.MallAdminUser{}).Error
+	if err != nil {
+		return errors.New("不存在的管理员用户")
+	}
 	if errors.Is(global.GVA_DB.Where("goods_id=?", req.GoodsId).First(&goodsInfo).Error, gorm.ErrRecordNotFound) {
 		return errors.New("商品不存在")
 	}
-	if errors.Is(global.GVA_DB.Where("config_type =? and goods_id=? and is_deleted=0", req.ConfigType, req.GoodsId).First(&manage.MallIndexConfig{}).Error, gorm.ErrRecordNotFound) {
+	if !errors.Is(global.GVA_DB.Where("config_type =? and goods_id=? and is_deleted=0", req.ConfigType, req.GoodsId).First(&manage.MallIndexConfig{}).Error, gorm.ErrRecordNotFound) {
 		return errors.New("已存在相同的首页配置项")
 	}
-	goodsId, _ := strconv.Atoi(req.GoodsId)
-	configRank, _ := strconv.Atoi(req.ConfigRank)
-	// uuid, _, _ := utils.UndoToken(token)
-	// err = global.GVA_DB.Where("u_uid =?", uuid).First(&manage.MallAdminUser{}).Error
-	// if err != nil {
-	// 	return errors.New("不存在的管理员用户")
-	// }
+	goodsId := utils.Transfer(req.GoodsId)
+	configRank := utils.Transfer(req.ConfigRank)
+	configType := utils.Transfer(req.ConfigType)
 	mallIndexConfig := manage.MallIndexConfig{
 		ConfigName:  req.ConfigName,
-		ConfigType:  req.ConfigType,
+		ConfigType:  configType,
 		GoodsId:     goodsId,
 		RedirectUrl: req.RedirectUrl,
 		ConfigRank:  configRank,
+		CreateUser:  uuid,
 	}
 	if err = utils.Verify(mallIndexConfig, utils.IndexConfigAddParamVerify); err != nil {
 		return errors.New(err.Error())
@@ -73,7 +74,12 @@ func (m *ManageIndexConfigService) GetMallIndexConfig(id uint) (err error, mallI
 }
 
 // UpdateMallIndexConfig 更新MallIndexConfig记录
-func (m *ManageIndexConfigService) UpdateMallIndexConfig(req request.MallIndexConfigUpdateParams) (err error) {
+func (m *ManageIndexConfigService) UpdateMallIndexConfig(token string, req request.MallIndexConfigUpdateParams) (err error) {
+	uuid, _, _ := utils.UndoToken(token)
+	err = global.GVA_DB.Where("u_uid =?", uuid).First(&manage.MallAdminUser{}).Error
+	if err != nil {
+		return errors.New("不存在的管理员用户")
+	}
 	//更新indexConfig
 	if errors.Is(global.GVA_DB.Where("goods_id = ?", req.GoodsId).First(&manage.MallGoodsInfo{}).Error, gorm.ErrRecordNotFound) {
 		return errors.New("商品不存在！")
@@ -81,14 +87,18 @@ func (m *ManageIndexConfigService) UpdateMallIndexConfig(req request.MallIndexCo
 	if errors.Is(global.GVA_DB.Where("config_id=?", req.ConfigId).First(&manage.MallIndexConfig{}).Error, gorm.ErrRecordNotFound) {
 		return errors.New("未查询到记录！")
 	}
-	configRank, _ := strconv.Atoi(req.ConfigRank)
+	goodsId := utils.Transfer(req.GoodsId)
+	configRank := utils.Transfer(req.ConfigRank)
+	configType := utils.Transfer(req.ConfigType)
+	// configRank, _ := strconv.Atoi(req.ConfigRank)
 	mallIndexConfig := manage.MallIndexConfig{
 		ConfigId:    req.ConfigId,
-		ConfigType:  req.ConfigType,
+		ConfigType:  configType,
 		ConfigName:  req.ConfigName,
 		RedirectUrl: req.RedirectUrl,
-		GoodsId:     req.GoodsId,
+		GoodsId:     goodsId,
 		ConfigRank:  configRank,
+		UpdateUser:  uuid,
 	}
 	if err = utils.Verify(mallIndexConfig, utils.IndexConfigUpdateParamVerify); err != nil {
 		return errors.New(err.Error())

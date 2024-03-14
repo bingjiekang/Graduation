@@ -52,7 +52,7 @@ func UserJWTAuth() gin.HandlerFunc {
 
 // 管理员中间件验证
 func AdminJWTAuth() gin.HandlerFunc {
-	fmt.Println("11111")
+	// fmt.Println("11111")
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("token")
 		if token == "" {
@@ -88,7 +88,7 @@ func AdminJWTAuth() gin.HandlerFunc {
 
 // 超级管理员验证
 func SuperAdminJWTAuth() gin.HandlerFunc {
-	fmt.Println("22222")
+	// fmt.Println("22222")
 	// 管理员验证后部分需要进行超级管理员验证(token已存在)
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("token")

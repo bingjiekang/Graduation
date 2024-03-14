@@ -5,4 +5,5 @@ type ManageRouterGroup struct {
 	ManageGoodsCategoryRouter
 	ManageCarouselRouter
 	ManageIndexConfigRouter
+	ManageGoodsInfoRouter
 }

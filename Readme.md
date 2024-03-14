@@ -2776,3 +2776,10 @@ func (r *ManageIndexConfigRouter) ApiManageIndexConfigRouter(Router *gin.RouterG
 
 
 
+## 6. 用户商家信息
+
+1. xxxx00 手机品牌专卖店
+2. xxxx01 苹果专卖店
+3. xxxx02 小米专卖店
+4. xxxx03 华为专卖店
+5. xxxx

@@ -11,14 +11,14 @@ type MallCarouselSearch struct {
 }
 
 type MallCarouselAddParam struct {
-	CarouselUrl  string `json:"carouselUrl"`
-	RedirectUrl  string `json:"redirectUrl"`
-	CarouselRank string `json:"carouselRank"`
+	CarouselUrl  string      `json:"carouselUrl"`
+	RedirectUrl  string      `json:"redirectUrl"`
+	CarouselRank interface{} `json:"carouselRank"`
 }
 
 type MallCarouselUpdateParam struct {
-	CarouselId   int    `json:"carouselId"`
-	CarouselUrl  string `json:"carouselUrl"`
-	RedirectUrl  string `json:"redirectUrl"`
-	CarouselRank string `json:"carouselRank" `
+	CarouselId   int         `json:"carouselId"`
+	CarouselUrl  string      `json:"carouselUrl"`
+	RedirectUrl  string      `json:"redirectUrl"`
+	CarouselRank interface{} `json:"carouselRank" `
 }

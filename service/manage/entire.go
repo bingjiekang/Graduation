@@ -6,4 +6,5 @@ type ManageServiceGroup struct {
 	FileUploadAndDownloadService
 	ManageCarouselService
 	ManageIndexConfigService
+	ManageGoodsInfoService
 }

@@ -11,18 +11,18 @@ type MallIndexConfigSearch struct {
 }
 
 type MallIndexConfigAddParams struct {
-	ConfigName  string `json:"configName"`
-	ConfigType  int    `json:"configType"`
-	GoodsId     string `json:"goodsId"`
-	RedirectUrl string `json:"redirectUrl"`
-	ConfigRank  string `json:"configRank"`
+	ConfigName  string      `json:"configName"`
+	ConfigType  interface{} `json:"configType"`
+	GoodsId     interface{} `json:"goodsId"`
+	RedirectUrl string      `json:"redirectUrl"`
+	ConfigRank  interface{} `json:"configRank"`
 }
 
 type MallIndexConfigUpdateParams struct {
-	ConfigId    int    `json:"configId"`
-	ConfigName  string `json:"configName"`
-	RedirectUrl string `json:"redirectUrl"`
-	ConfigType  int    `json:"configType"`
-	GoodsId     int    `json:"goodsId"`
-	ConfigRank  string `json:"configRank"`
+	ConfigId    int         `json:"configId"`
+	ConfigName  string      `json:"configName"`
+	RedirectUrl string      `json:"redirectUrl"`
+	ConfigType  interface{} `json:"configType"`
+	GoodsId     interface{} `json:"goodsId"`
+	ConfigRank  interface{} `json:"configRank"`
 }

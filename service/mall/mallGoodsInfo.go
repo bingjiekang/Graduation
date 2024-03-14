@@ -25,7 +25,8 @@ func (m *MallGoodsInfoService) GetMallGoodsInfo(id int) (err error, res response
 		return err, response.GoodsInfoDetailResponse{}
 	}
 	var list []string
-	list = append(list, mallGoodsInfo.GoodsCarousel)
+	// 本应该是添加轮播图 后修改成添加商品首页照片
+	list = append(list, mallGoodsInfo.GoodsCoverImg)
 	res.GoodsCarouselList = list
 
 	return

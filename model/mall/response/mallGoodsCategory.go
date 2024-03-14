@@ -5,6 +5,7 @@ type ThirdLevelCategoryVO struct {
 	CategoryId    int    `json:"categoryId"`
 	CategoryLevel int    `json:"categoryLevel"`
 	CategoryName  string `json:"categoryName" `
+	CategoryUrl   string `json:"categoryUrl"`
 }
 
 // 第二级分类数据

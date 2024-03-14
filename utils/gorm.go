@@ -55,6 +55,8 @@ func InitGormMysql() *gorm.DB {
 		{
 			db.AutoMigrate(&manage.MallAdminUser{})         // 管理员和超级管理员信息表
 			db.AutoMigrate(&common.FileUploadAndDownload{}) // 图片路径存储
+			db.AutoMigrate(&manage.MallBlockChain{})        // 区块链信息存储
+			db.AutoMigrate(&manage.MallBlockTrading{})      // 区块交易信息
 		}
 		// db.AutoMigrate(&users.UserTrade{})
 		global.GVA_LOG.Info("数据库连接成功!")

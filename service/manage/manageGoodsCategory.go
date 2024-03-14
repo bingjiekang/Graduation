@@ -7,7 +7,6 @@ import (
 	"Graduation/model/manage/request"
 	"Graduation/utils"
 	"errors"
-	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -17,20 +16,19 @@ type ManageGoodsCategoryService struct {
 
 // AddCategory 添加商品分类
 func (m *ManageGoodsCategoryService) AddCategory(req request.MallGoodsCategoryReq) (err error) {
-	if !errors.Is(global.GVA_DB.Where("category_level=? AND category_name=? AND is_deleted=0", req.CategoryLevel, req.CategoryName).First(&manage.MallGoodsCategory{}).Error, gorm.ErrRecordNotFound) {
-		return errors.New("存在相同分类")
+	level := utils.Transfer(req.CategoryLevel)
+	pid := utils.Transfer(req.ParentId)
+	rank := utils.Transfer(req.CategoryRank)
+	if !errors.Is(global.GVA_DB.Where("category_level=? AND category_name=? AND is_deleted=0", level, req.CategoryName).First(&manage.MallGoodsCategory{}).Error, gorm.ErrRecordNotFound) {
+		return errors.New("无法添加,存在相同分类")
 	}
-	// fmt.Println(req)
-	// 将对应数据进行字符串转数字
-	rank, _ := strconv.Atoi(req.CategoryRank)
-	level, _ := strconv.Atoi(req.CategoryLevel)
-	pid, _ := strconv.Atoi(req.ParentId)
 	category := manage.MallGoodsCategory{
 		CategoryLevel: level,
 		CategoryName:  req.CategoryName,
 		CategoryRank:  rank,
 		ParentId:      pid,
 		IsDeleted:     0,
+		CategoryUrl:   req.CategoryUrl, // 三级分类应该上传
 	}
 	// 这个校验理论上应该放在api层，但是因为前端的传值是string，而我们的校验规则是Int,所以只能转换格式后再校验
 	if err = utils.Verify(category, utils.GoodsCategoryVerify); err != nil {
@@ -75,14 +73,17 @@ func (m *ManageGoodsCategoryService) SelectCategoryById(categoryId int) (err err
 
 // UpdateCategory 更新商品分类
 func (m *ManageGoodsCategoryService) UpdateCategory(req request.MallGoodsCategoryReq) (err error) {
-	if !errors.Is(global.GVA_DB.Where("category_level=? AND category_name=? AND is_deleted=0", req.CategoryLevel, req.CategoryName).First(&manage.MallGoodsCategory{}).Error, gorm.ErrRecordNotFound) {
-		return errors.New("存在相同分类")
+	level := utils.Transfer(req.CategoryLevel)
+	rank := utils.Transfer(req.CategoryRank)
+	if !errors.Is(global.GVA_DB.Where("category_id!=? AND category_level=? AND category_name=? AND is_deleted=0", req.CategoryId, level, req.CategoryName).First(&manage.MallGoodsCategory{}).Error, gorm.ErrRecordNotFound) {
+		return errors.New("存在相同分类!")
 	}
-	rank, _ := strconv.Atoi(req.CategoryRank)
+	// rank, _ := strconv.Atoi(req.CategoryRank)
 	// 修改分类名字
 	category := manage.MallGoodsCategory{
 		CategoryName: req.CategoryName,
 		CategoryRank: rank,
+		CategoryUrl:  req.CategoryUrl,
 	}
 	// 这个校验理论上应该放在api层，但是因为前端的传值是string，而我们的校验规则是Int,所以只能转换格式后再校验
 	if err := utils.Verify(category, utils.GoodsCategoryVerify); err != nil {

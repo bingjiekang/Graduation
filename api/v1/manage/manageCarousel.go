@@ -17,8 +17,9 @@ type ManageCarouselApi struct {
 // 创建轮播图
 func (m *ManageCarouselApi) CreateCarousel(c *gin.Context) {
 	var req requ.MallCarouselAddParam
+	token := c.GetHeader("token")
 	_ = c.ShouldBindJSON(&req)
-	if err := mallCarouselService.CreateCarousel(req); err != nil {
+	if err := mallCarouselService.CreateCarousel(token, req); err != nil {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))
 		response.FailWithMessage("创建失败"+err.Error(), c)
 	} else {
@@ -59,7 +60,8 @@ func (m *ManageCarouselApi) FindCarousel(c *gin.Context) {
 func (m *ManageCarouselApi) UpdateCarousel(c *gin.Context) {
 	var req requ.MallCarouselUpdateParam
 	_ = c.ShouldBindJSON(&req)
-	if err := mallCarouselService.UpdateCarousel(req); err != nil {
+	token := c.GetHeader("token")
+	if err := mallCarouselService.UpdateCarousel(token, req); err != nil {
 		global.GVA_LOG.Error("更新轮播图失败!", zap.Error(err))
 		response.FailWithMessage("更新轮播图失败:"+err.Error(), c)
 	} else {

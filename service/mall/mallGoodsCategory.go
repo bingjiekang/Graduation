@@ -5,7 +5,6 @@ import (
 	"Graduation/model/mall/response"
 	"Graduation/model/manage"
 	"Graduation/utils/enum"
-	"fmt"
 
 	"github.com/jinzhu/copier"
 )
@@ -19,7 +18,7 @@ func (m *MallGoodsCategoryService) GetGoodsCategories() (err error, MallIndexCat
 	// 获取并添加一级分类的固定数量的数据
 	_, firstLevelCategories := selectByLevelAndParentIdsAndNumber([]int{0}, enum.LevelOne.Code())
 	if len(firstLevelCategories) != 0 {
-		fmt.Println("一级分类", firstLevelCategories)
+		// fmt.Println("一级分类", firstLevelCategories)
 		var firstLevelCategoryIds []int
 		for _, firstLevelCategory := range firstLevelCategories {
 			firstLevelCategoryIds = append(firstLevelCategoryIds, firstLevelCategory.CategoryId)
@@ -28,7 +27,7 @@ func (m *MallGoodsCategoryService) GetGoodsCategories() (err error, MallIndexCat
 		_, secondLevelCategories := selectByLevelAndParentIdsAndNumber(firstLevelCategoryIds, enum.LevelTwo.Code())
 		var secondLevelCategoryVOS []response.SecondLevelCategoryVO
 		if len(secondLevelCategories) != 0 {
-			fmt.Println("二级分类", secondLevelCategories)
+			// fmt.Println("二级分类", secondLevelCategories)
 			var secondLevelCategoryIds []int
 			for _, secondLevelCategory := range secondLevelCategories {
 				secondLevelCategoryIds = append(secondLevelCategoryIds, secondLevelCategory.CategoryId)
@@ -38,7 +37,7 @@ func (m *MallGoodsCategoryService) GetGoodsCategories() (err error, MallIndexCat
 
 			thirdLevelCategoryMap := make(map[int][]manage.MallGoodsCategory)
 			if len(thirdLevelCategories) != 0 {
-				fmt.Println("三级分类", thirdLevelCategories)
+				// fmt.Println("三级分类", thirdLevelCategories)
 				for _, thirdLevelCategory := range thirdLevelCategories {
 					thirdLevelCategoryMap[thirdLevelCategory.ParentId] = []manage.MallGoodsCategory{}
 				}
@@ -99,7 +98,7 @@ func (m *MallGoodsCategoryService) GetGoodsCategories() (err error, MallIndexCat
 			MallIndexCategoryVOS = append(MallIndexCategoryVOS, mallIndexCategoryVO)
 		}
 	}
-	fmt.Print("结果", MallIndexCategoryVOS)
+	// fmt.Print("结果", MallIndexCategoryVOS)
 	return
 }
 
@@ -108,7 +107,6 @@ func selectByLevelAndParentIdsAndNumber(ids []int, level int) (err error, catego
 	// 获取对应分类数据
 	// err = global.GVA_DB.Where("parent_id in ? and category_level =? and is_deleted = 0", ids, level).Order("category_rank desc").Limit(limit).Find(&categories).Error
 	err = global.GVA_DB.Where("parent_id in ? and category_level =? and is_deleted = 0", ids, level).Order("category_rank asc").Find(&categories).Error
-	fmt.Println(categories, len(categories))
-
+	// fmt.Println(categories, len(categories))
 	return
 }

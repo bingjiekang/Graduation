@@ -21,10 +21,10 @@ func (r *ManageIndexConfigRouter) ApiManageIndexConfigRouter(Router *gin.RouterG
 	}
 	// 超级管理员
 	{
-		superIndexConfigRouter.POST("indexConfigs", mallIndexConfigApi.CreateIndexConfig)        // 新建MallIndexConfig
-		superIndexConfigRouter.GET("indexConfigs/:id", mallIndexConfigApi.FindIndexConfig)       // 根据ID获取MallIndexConfig
-		superIndexConfigRouter.PUT("indexConfigs", mallIndexConfigApi.UpdateIndexConfig)         // 更新MallIndexConfig
-		superIndexConfigRouter.POST("indexConfigs/delete", mallIndexConfigApi.DeleteIndexConfig) // 删除MallIndexConfig
+		superIndexConfigRouter.POST("indexConfigs", mallIndexConfigApi.CreateIndexConfig)   // 新建MallIndexConfig
+		superIndexConfigRouter.GET("indexConfigs/:id", mallIndexConfigApi.FindIndexConfig)  // 根据ID获取MallIndexConfig
+		superIndexConfigRouter.PUT("indexConfigs", mallIndexConfigApi.UpdateIndexConfig)    // 更新MallIndexConfig
+		superIndexConfigRouter.DELETE("indexConfigs", mallIndexConfigApi.DeleteIndexConfig) // 删除MallIndexConfig
 	}
 
 }

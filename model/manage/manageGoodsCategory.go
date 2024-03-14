@@ -10,6 +10,7 @@ type MallGoodsCategory struct {
 	CategoryName  string    `json:"categoryName" gorm:"comment:分类名称"`
 	CategoryRank  int       `json:"categoryRank" gorm:"comment:排序比重"`
 	IsDeleted     int       `json:"isDeleted" gorm:"comment:是否删除"`
+	CategoryUrl   string    `json:"categoryUrl" form:"categoryUrl" gorm:"column:category_url;comment:分类图;type:varchar(100);"`
 	CreatedAt     time.Time `json:"createdAt" form:"createdAt" gorm:"column:created_at;comment:创建时间;type:datetime"`
 	UpdatedAt     time.Time `json:"updatedAt" form:"updatedAt" gorm:"column:updated_at;comment:更新时间;type:datetime"`
 }

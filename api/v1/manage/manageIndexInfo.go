@@ -18,7 +18,8 @@ type ManageIndexConfigApi struct {
 func (m *ManageIndexConfigApi) CreateIndexConfig(c *gin.Context) {
 	var req request.MallIndexConfigAddParams
 	_ = c.ShouldBindJSON(&req)
-	if err := mallIndexConfigService.CreateMallIndexConfig(req); err != nil {
+	token := c.GetHeader("token")
+	if err := mallIndexConfigService.CreateMallIndexConfig(token, req); err != nil {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))
 		response.FailWithMessage("创建失败"+err.Error(), c)
 	} else {
@@ -58,7 +59,8 @@ func (m *ManageIndexConfigApi) FindIndexConfig(c *gin.Context) {
 func (m *ManageIndexConfigApi) UpdateIndexConfig(c *gin.Context) {
 	var req request.MallIndexConfigUpdateParams
 	_ = c.ShouldBindJSON(&req)
-	if err := mallIndexConfigService.UpdateMallIndexConfig(req); err != nil {
+	token := c.GetHeader("token")
+	if err := mallIndexConfigService.UpdateMallIndexConfig(token, req); err != nil {
 		global.GVA_LOG.Error("更新失败!", zap.Error(err))
 		response.FailWithMessage("更新失败:"+err.Error(), c)
 	} else {
