@@ -33,8 +33,11 @@ func (m *MallShopCartApi) AddMallShopCartItem(c *gin.Context) {
 	if err := mallShopCartService.AddMallCartItem(token, req); err != nil {
 		global.GVA_LOG.Error("添加购物车失败", zap.Error(err))
 		response.FailWithMessage("添加购物车失败:"+err.Error(), c)
+		// return
+	} else {
+		response.OkWithMessage("添加购物车成功", c)
 	}
-	response.OkWithMessage("添加购物车成功", c)
+
 }
 
 // 更新购物车信息
@@ -45,6 +48,7 @@ func (m *MallShopCartApi) UpdateMallShopCartItem(c *gin.Context) {
 	if err := mallShopCartService.UpdateMallCartItem(token, req); err != nil {
 		global.GVA_LOG.Error("修改购物车失败", zap.Error(err))
 		response.FailWithMessage("修改购物车失败:"+err.Error(), c)
+		return
 	}
 	response.OkWithMessage("修改购物车成功", c)
 }

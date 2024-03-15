@@ -2782,4 +2782,6 @@ func (r *ManageIndexConfigRouter) ApiManageIndexConfigRouter(Router *gin.RouterG
 2. xxxx01 苹果专卖店
 3. xxxx02 小米专卖店
 4. xxxx03 华为专卖店
-5. xxxx
+5. xxxx04 男装专卖店
+6.  xxxx05 女装专卖店
+7.  xxxx06 特色专卖店

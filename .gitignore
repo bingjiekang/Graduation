@@ -19,5 +19,6 @@
 # vendor/
 log/
 test/
+static/
 # Go workspace file
 go.work

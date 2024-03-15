@@ -6,6 +6,7 @@ import (
 	"Graduation/model/common/request"
 	"Graduation/model/common/response"
 	req "Graduation/model/manage/request"
+	"mime/multipart"
 	"strconv"
 
 	// "Graduation/model/manage/"
@@ -132,4 +133,41 @@ func (m *ManageAdminUserApi) UploadFile(c *gin.Context) {
 	}
 	//这里直接使用本地的url
 	response.OkWithData("http://localhost:8080/"+file.Url, c)
+}
+
+// UploadFiles 上传多张图片
+func (m *ManageAdminUserApi) UploadFiles(c *gin.Context) {
+	var file common.FileUploadAndDownload
+	token := c.GetHeader("token")
+	noSave := c.DefaultQuery("noSave", "0")
+	//获取前端传来的数据
+	form, err := c.MultipartForm()
+	if err != nil {
+		global.GVA_LOG.Error("接收文件失败!", zap.Error(err))
+		response.FailWithMessage("接收文件失败", c)
+		return
+	}
+	// 获取所有图片
+	var files []*multipart.FileHeader
+	counts := len(form.File)
+	if counts == 1 { // 上传一张图片 名称file
+		files = form.File["file"]
+	} else if counts > 1 { // 上传多张图片 名称 file1/2/3/4...
+		for count := 1; count <= counts; count++ {
+			val := "file" + strconv.Itoa(count)
+			files = append(files, form.File[val][0])
+		}
+	}
+	datafile := []string{}
+	for _, header := range files {
+		err, file = fileUploadAndDownloadService.UploadFile(token, header, noSave) // 文件上传后拿到文件路径
+		if err != nil {
+			global.GVA_LOG.Error("修改数据库链接失败!", zap.Error(err))
+			response.FailWithMessage("修改数据库链接失败", c)
+			return
+		}
+		//这里直接使用本地的url
+		datafile = append(datafile, "http://localhost:8080/"+file.Url)
+	}
+	response.OkWithData(datafile, c)
 }

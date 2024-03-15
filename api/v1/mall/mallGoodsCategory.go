@@ -17,6 +17,8 @@ func (m *MallGoodsCategoryApi) GetGoodsCategorize(c *gin.Context) {
 	if err != nil {
 		global.GVA_LOG.Error("查询失败!", zap.Error(err))
 		response.FailWithMessage("查询失败"+err.Error(), c)
+	} else {
+		response.OkWithData(list, c)
 	}
-	response.OkWithData(list, c)
+
 }

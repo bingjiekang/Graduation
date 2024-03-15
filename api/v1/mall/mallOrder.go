@@ -21,9 +21,9 @@ func (m *MallOrderApi) SaveOrder(c *gin.Context) {
 	_ = c.ShouldBindJSON(&saveOrderParam)
 	if err := utils.Verify(saveOrderParam, utils.SaveOrderParamVerify); err != nil {
 		response.FailWithMessage(err.Error(), c)
+		return
 	}
 	token := c.GetHeader("token")
-
 	priceTotal := 0
 	err, itemsForSave := mallShopCartService.GetCartItemsTotal(token, saveOrderParam.CartItemIds)
 	if len(itemsForSave) < 1 {
@@ -53,6 +53,7 @@ func (m *MallOrderApi) PaySuccess(c *gin.Context) {
 	if err := mallOrderService.PaySuccess(orderNo, payType); err != nil {
 		global.GVA_LOG.Error("订单支付失败", zap.Error(err))
 		response.FailWithMessage("订单支付失败:"+err.Error(), c)
+		return
 	}
 	response.OkWithMessage("订单支付成功", c)
 }
@@ -64,6 +65,7 @@ func (m *MallOrderApi) FinishOrder(c *gin.Context) {
 	if err := mallOrderService.FinishOrder(token, orderNo); err != nil {
 		global.GVA_LOG.Error("订单签收失败", zap.Error(err))
 		response.FailWithMessage("订单签收失败:"+err.Error(), c)
+		return
 	}
 	response.OkWithMessage("订单签收成功", c)
 
@@ -76,6 +78,7 @@ func (m *MallOrderApi) CancelOrder(c *gin.Context) {
 	if err := mallOrderService.CancelOrder(token, orderNo); err != nil {
 		global.GVA_LOG.Error("订单签收失败", zap.Error(err))
 		response.FailWithMessage("订单签收失败:"+err.Error(), c)
+		return
 	}
 	response.OkWithMessage("订单签收成功", c)
 

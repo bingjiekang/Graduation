@@ -46,7 +46,7 @@ func (m *MallShopCartService) GetShopCartItems(token string) (err error, cartIte
 		cartItems = append(cartItems, cartItem)
 	}
 
-	return
+	return err, cartItems
 }
 
 // 添加商品到购物车
@@ -65,12 +65,12 @@ func (m *MallShopCartService) AddMallCartItem(token string, req request.SaveCart
 	// 是否已存在商品
 	uuid, _, _ := utils.UndoToken(token)
 	err = global.GVA_DB.Where("u_uid = ? and goods_id = ? and is_deleted = 0", uuid, req.GoodsId).Find(&shopCartItems).Error
-	if err != nil {
+	if len(shopCartItems) != 0 || err != nil {
 		return errors.New("已存在！无需重复添加！")
 	}
 	err = global.GVA_DB.Where("goods_id = ? ", req.GoodsId).First(&manage.MallGoodsInfo{}).Error
 	if err != nil {
-		return errors.New("商品为空")
+		return errors.New("商品不存在或为空!")
 	}
 	var total int64
 	global.GVA_DB.Where("u_uid = ? and is_deleted = 0", uuid).Count(&total)

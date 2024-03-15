@@ -20,6 +20,7 @@ func (r *ManageAdminUserRouter) ApiManageAdminUserRouter(Router *gin.RouterGroup
 	{
 		mallAdminUserWithoutRouter.POST("adminUser/login", mallAdminUserApi.ManageLogin) //管理员登陆
 		mallAdminUserWithoutRouter.POST("upload/file", mallAdminUserApi.UploadFile)      // 上传图片
+		mallAdminUserWithoutRouter.POST("upload/files", mallAdminUserApi.UploadFiles)    // 上传多张图片
 	}
 	// 管理员权限
 	{

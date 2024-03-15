@@ -67,6 +67,7 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 			}
 			//生成订单号
 			orderNo = utils.GenOrderNo()
+			// 明天继续 对商家同时添加订单号
 			priceTotal := 0
 			//保存订单
 			var mallOrder manage.MallOrder

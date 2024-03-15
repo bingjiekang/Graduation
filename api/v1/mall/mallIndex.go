@@ -31,6 +31,7 @@ func (m MallIndexApi) MallIndexInfomation(c *gin.Context) {
 	if err != nil {
 		global.GVA_LOG.Error("热门商品获取失败"+err.Error(), zap.Error(err))
 		response.FailWithMessage("热门商品获取失败", c)
+		return
 	}
 	// 最新推荐商品展示
 	err, recommendGoodses := mallIndexConfigService.GetIndexInfomation(enum.IndexGoodsRecommond.Code(), 10)
