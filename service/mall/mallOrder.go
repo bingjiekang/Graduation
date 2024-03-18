@@ -9,6 +9,7 @@ import (
 	"Graduation/utils"
 	"Graduation/utils/enum"
 	"errors"
+	"fmt"
 
 	"github.com/jinzhu/copier"
 
@@ -58,16 +59,89 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 		if err = global.GVA_DB.Where("cart_item_id in ?", itemIdList).Updates(mall.MallShopCartItem{IsDeleted: 1}).Error; err == nil {
 			var stockNumDTOS []request.StockNumDTO
 			copier.Copy(&stockNumDTOS, &shopCartItems)
+			//生成订单号
+			fmt.Println("开始打印订单号")
+			orderNo = utils.GenOrderNo()
+			fmt.Println("订单号", orderNo)
+			// 事务开始
+			transaction := global.GVA_DB.Begin()
+			// 定义字典存储商家id和对应的获得的收益
+			var mValue map[int64]int = make(map[int64]int)
 			for _, stockNumDTO := range stockNumDTOS {
+				// 商品信息
 				var goodsInfo manage.MallGoodsInfo
+				// 商家订单信息
+				var mallAdminOrder manage.MallAdminOrder
 				global.GVA_DB.Where("goods_id =?", stockNumDTO.GoodsId).First(&goodsInfo)
+				// 更新库存信息
 				if err = global.GVA_DB.Where("goods_id =? and stock_num>= ? and goods_sell_status = 0", stockNumDTO.GoodsId, stockNumDTO.GoodsCount).Updates(manage.MallGoodsInfo{StockNum: goodsInfo.StockNum - stockNumDTO.GoodsCount}).Error; err != nil {
-					return errors.New("库存不足！"), orderNo
+					// 事务回滚
+					transaction.Rollback()
+					return errors.New(fmt.Sprintf("抱歉 %s 商品库存不足！", goodsInfo.GoodsName)), orderNo
+				} else {
+					// 对商家同时添加订单号,区块哈希等(自己商品的对应订单号)
+					{
+						mallAdminOrder.OrderNo = orderNo
+						mallAdminOrder.Muid = goodsInfo.UUid
+						mallAdminOrder.Buid = uuid
+						mValue[goodsInfo.UUid] += stockNumDTO.GoodsCount * goodsInfo.SellingPrice // 某一个商品id下的价值计算
+					}
+					// 商品区块交易
+					var mallManageTrading manage.MallBlockTrading
+					// 商品区块信息
+					var mallManageBlockChain manage.MallBlockChain
+					for i := goodsInfo.PrevStock + 1; i <= goodsInfo.PrevStock+stockNumDTO.GoodsCount; i++ {
+						// 添加商品交易区块地址
+						mallManageTrading.OrderNo = orderNo
+						mallManageTrading.Commodity = goodsInfo.GoodsId
+						mallManageTrading.CommodityStocks = i
+						mallManageTrading.SellerUid = goodsInfo.UUid
+						mallManageTrading.BuyerUid = uuid
+						// 当前商品区块哈希
+						if err = global.GVA_DB.Where("u_uid = ? and commodity = ? and commodity_stocks = ? and is_sale = false", goodsInfo.UUid, goodsInfo.GoodsId, i).First(&mallManageBlockChain).Error; err != nil {
+							return errors.New("商品区块信息获取失败"), orderNo
+						}
+						// 初始商品哈希
+						mallManageTrading.InitBlockHash = mallManageBlockChain.InitBlockHash
+						// 更新区块交易当前交易哈希(mallManageBlockChain.CurrBlockHash)
+						newBlock := utils.GenerateNewBlock(
+							utils.Block{
+								Index:         mallManageBlockChain.Number,
+								CurrBlockHash: mallManageBlockChain.InitBlockHash,
+							},
+							utils.BlockUserInfo{
+								Muid:    goodsInfo.UUid,
+								Buid:    uuid,
+								GoodsId: goodsInfo.GoodsId,
+								Count:   i,
+							},
+						)
+						// 当前商品区块哈希
+						mallManageTrading.CurrBlockHash = newBlock.CurrBlockHash
+						// 对商品交易信息进行存储
+						if err = global.GVA_DB.Save(&mallManageTrading).Error; err != nil {
+							transaction.Rollback()
+							return errors.New("区块订单入库失败！"), orderNo
+						}
+					}
+					if err = global.GVA_DB.Where("goods_id =?", stockNumDTO.GoodsId).Updates(manage.MallGoodsInfo{PrevStock: goodsInfo.PrevStock + stockNumDTO.GoodsCount}).Error; err != nil {
+						transaction.Rollback()
+						return errors.New("商品销售当前位更新失败！"), orderNo
+					}
+				}
+				// 其他状态确定
+				{
+					mallAdminOrder.TotalPrice = mValue[goodsInfo.UUid]
+					mallAdminOrder.ExtraInfo = ""
+					localSH, _ := time.LoadLocation("Asia/Shanghai")
+					mallAdminOrder.PayTime = time.Now().In(localSH)
+
+				}
+				if err = global.GVA_DB.Where("order_no = ? AND m_uid = ?", mallAdminOrder.OrderNo, mallAdminOrder.Muid).Save(&mallAdminOrder).Error; err != nil {
+					transaction.Rollback()
+					return err, orderNo
 				}
 			}
-			//生成订单号
-			orderNo = utils.GenOrderNo()
-			// 明天继续 对商家同时添加订单号
 			priceTotal := 0
 			//保存订单
 			var mallOrder manage.MallOrder
@@ -82,9 +156,12 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 			}
 			mallOrder.TotalPrice = priceTotal
 			mallOrder.ExtraInfo = ""
+			localSH, _ := time.LoadLocation("Asia/Shanghai")
+			mallOrder.PayTime = time.Now().In(localSH)
 			//生成订单项并保存订单项纪录
 			if err = global.GVA_DB.Save(&mallOrder).Error; err != nil {
-				return errors.New("订单入库失败！"), orderNo
+				transaction.Rollback()
+				return errors.New("订单入库失败！" + err.Error()), orderNo
 			}
 			//生成订单收货地址快照，并保存至数据库
 			var mallOrderAddress mall.MallOrderAddress
@@ -96,11 +173,21 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 				var mallOrderItem manage.MallOrderItem
 				copier.Copy(&mallOrderItem, &mallShoppingCartItemVO)
 				mallOrderItem.OrderId = mallOrder.OrderId
+				// 获取商品当前更新count位后的信息
+				var tempMallGoods manage.MallGoodsInfo
+				if err = global.GVA_DB.Where("goods_id = ?", mallShoppingCartItemVO.GoodsId).First(&tempMallGoods).Error; err != nil {
+					transaction.Rollback()
+					return errors.New("商品信息获取失败!"), orderNo
+				}
+				mallOrderItem.PrevStock = tempMallGoods.PrevStock - mallShoppingCartItemVO.GoodsCount
 				mallOrderItems = append(mallOrderItems, mallOrderItem)
 			}
 			if err = global.GVA_DB.Save(&mallOrderItems).Error; err != nil {
+				transaction.Rollback()
 				return err, orderNo
 			}
+			// 事务提交
+			transaction.Commit()
 		}
 	}
 	return
@@ -124,7 +211,7 @@ func (m *MallOrderService) PaySuccess(orderNo string, payType int) (err error) {
 	return
 }
 
-// FinishOrder 完结订单
+// FinishOrder 完结订单(需要增加对商品的区块信息更改)
 func (m *MallOrderService) FinishOrder(token string, orderNo string) (err error) {
 	// 判断用户是否存在
 	if !IsUserExist(token) {

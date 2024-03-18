@@ -19,6 +19,7 @@ type MallGoodsInfo struct {
 	StockNum           int       `json:"stockNum" form:"stockNum" gorm:"column:stock_num;comment:商品库存数量;type:int"`
 	Tag                string    `json:"tag" form:"tag" gorm:"column:tag;comment:商品标签;type:varchar(20);"`
 	GoodsSellStatus    int       `json:"goodsSellStatus" form:"goodsSellStatus" gorm:"column:goods_sell_status;comment:商品上架状态 1-下架 0-上架;type:tinyint"`
+	PrevStock          int       `json:"prevStock" form:"prevStock" gorm:"column:prev_stock;comment:当前销售位;type:tinyint"`
 	CreateUser         int64     `json:"createUser" form:"createUser" gorm:"column:create_user;comment:添加者主键id;type:int"`
 	UpdateUser         int64     `json:"updateUser" form:"updateUser" gorm:"column:update_user;comment:修改者主键id;type:int"`
 	CreatedAt          time.Time `json:"createdAt" form:"createdAt" gorm:"column:created_at;comment:创建时间;type:datetime"`

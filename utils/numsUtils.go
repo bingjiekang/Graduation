@@ -38,12 +38,11 @@ func GenValidateCode(width int) string {
 func GenOrderNo() string {
 	// 获取当前日期时间作为订单号的一部分
 	currentTime := time.Now().Format("20060102150405")
-
 	// 生成随机数作为订单号的一部分
-	rd := rand.Rand{} // 更新后 方法
-	rd.Seed(time.Now().UnixNano())
-	randomPart := fmt.Sprintf("%04d", rd.Intn(10000))
-
+	// rd := rand.Rand{} // 更新后 方法
+	rand.Seed(time.Now().UnixNano())
+	// rd.Seed()
+	randomPart := fmt.Sprintf("%04d", rand.Intn(10000))
 	// 构建订单号
 	orderNumber := currentTime + randomPart
 

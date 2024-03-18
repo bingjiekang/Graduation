@@ -8,6 +8,7 @@ type ManageGroup struct {
 	ManageCarouselApi      // 轮播图
 	ManageIndexConfigApi   // 首页商品热销/新品/推荐配置
 	ManageGoodsInfoApi     // 商品配置
+	ManageOrderApi         // 后端商品销售管理
 }
 
 var (
@@ -17,4 +18,5 @@ var (
 	mallCarouselService          = service.ServiceGroupApp.ManageServiceGroup.ManageCarouselService        // 首页轮播图
 	mallIndexConfigService       = service.ServiceGroupApp.ManageServiceGroup.ManageIndexConfigService     // 首页商品热销/新品/商品推荐配置
 	mallGoodsInfoService         = service.ServiceGroupApp.ManageServiceGroup.ManageGoodsInfoService       // 商品信息
+	mallOrderService             = service.ServiceGroupApp.ManageServiceGroup.ManageOrderService           // 商品订单处理
 )

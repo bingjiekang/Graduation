@@ -21,6 +21,11 @@ func (m *MallShopCartApi) CartItemList(c *gin.Context) {
 		global.GVA_LOG.Error("获取购物车失败", zap.Error(err))
 		response.FailWithMessage("获取购物车失败:"+err.Error(), c)
 	} else {
+		// data不能为null 前端取数 如果为空 需要空数组[]Interface{}
+		if len(shopCartItem) == 0 {
+			response.OkWithData(make([]interface{}, 0), c)
+			return
+		}
 		response.OkWithData(shopCartItem, c)
 	}
 }
