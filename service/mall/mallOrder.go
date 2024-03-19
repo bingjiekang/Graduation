@@ -60,9 +60,9 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 			var stockNumDTOS []request.StockNumDTO
 			copier.Copy(&stockNumDTOS, &shopCartItems)
 			//生成订单号
-			fmt.Println("开始打印订单号")
+			// fmt.Println("开始打印订单号")
 			orderNo = utils.GenOrderNo()
-			fmt.Println("订单号", orderNo)
+			// fmt.Println("订单号", orderNo)
 			// 事务开始
 			transaction := global.GVA_DB.Begin()
 			// 定义字典存储商家id和对应的获得的收益
@@ -86,11 +86,12 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 						mallAdminOrder.Buid = uuid
 						mValue[goodsInfo.UUid] += stockNumDTO.GoodsCount * goodsInfo.SellingPrice // 某一个商品id下的价值计算
 					}
-					// 商品区块交易
-					var mallManageTrading manage.MallBlockTrading
-					// 商品区块信息
-					var mallManageBlockChain manage.MallBlockChain
+
 					for i := goodsInfo.PrevStock + 1; i <= goodsInfo.PrevStock+stockNumDTO.GoodsCount; i++ {
+						// 商品区块交易
+						var mallManageTrading manage.MallBlockTrading
+						// 商品区块信息
+						var mallManageBlockChain manage.MallBlockChain
 						// 添加商品交易区块地址
 						mallManageTrading.OrderNo = orderNo
 						mallManageTrading.Commodity = goodsInfo.GoodsId
@@ -98,8 +99,8 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 						mallManageTrading.SellerUid = goodsInfo.UUid
 						mallManageTrading.BuyerUid = uuid
 						// 当前商品区块哈希
-						if err = global.GVA_DB.Where("u_uid = ? and commodity = ? and commodity_stocks = ? and is_sale = false", goodsInfo.UUid, goodsInfo.GoodsId, i).First(&mallManageBlockChain).Error; err != nil {
-							return errors.New("商品区块信息获取失败"), orderNo
+						if err = global.GVA_DB.Where("u_uid = ? and commodity = ? and commodity_stocks = ? and is_sale = 0", goodsInfo.UUid, goodsInfo.GoodsId, i).First(&mallManageBlockChain).Error; err != nil {
+							return errors.New("商品区块信息获取失败" + err.Error()), orderNo
 						}
 						// 初始商品哈希
 						mallManageTrading.InitBlockHash = mallManageBlockChain.InitBlockHash
@@ -119,7 +120,7 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 						// 当前商品区块哈希
 						mallManageTrading.CurrBlockHash = newBlock.CurrBlockHash
 						// 对商品交易信息进行存储
-						if err = global.GVA_DB.Save(&mallManageTrading).Error; err != nil {
+						if err = global.GVA_DB.Create(&mallManageTrading).Error; err != nil {
 							transaction.Rollback()
 							return errors.New("区块订单入库失败！"), orderNo
 						}
@@ -274,7 +275,28 @@ func (m *MallOrderService) GetOrderDetailByOrderNo(token string, orderNo string)
 	}
 
 	var mallOrderItemVOS []response.MallOrderItemVO
-	copier.Copy(&mallOrderItemVOS, &orderItems)
+	// copier.Copy(&mallOrderItemVOS, &orderItems)
+
+	// 从区块链交易记录获取信息
+	for _, orderItem := range orderItems {
+		mallOrderItemVO := response.MallOrderItemVO{
+			GoodsId:       orderItem.GoodsId,
+			GoodsName:     orderItem.GoodsName,
+			GoodsCount:    orderItem.GoodsCount,
+			GoodsCoverImg: orderItem.GoodsCoverImg,
+			SellingPrice:  orderItem.SellingPrice,
+		}
+		for i := orderItem.PrevStock + 1; i <= orderItem.PrevStock+orderItem.GoodsCount; i++ {
+			// 获取对应位商品区块交易哈希
+			var blockTrading manage.MallBlockTrading
+			if err = global.GVA_DB.Where("order_no = ? and commodity = ? and commodity_stocks = ?", mallOrder.OrderNo, orderItem.GoodsId, i).First(&blockTrading).Error; err != nil {
+				return errors.New("未查询到商品区块交易记录！"), orderDetail
+			}
+			// 把区块交易哈希加入到前端显示信息
+			mallOrderItemVO.BlockChainHash = append(mallOrderItemVO.BlockChainHash, blockTrading.CurrBlockHash)
+		}
+		mallOrderItemVOS = append(mallOrderItemVOS, mallOrderItemVO)
+	}
 	copier.Copy(&orderDetail, &mallOrder)
 	// 订单状态前端显示为中文
 	_, OrderStatusStr := enum.GetMallOrderStatusEnumByStatus(orderDetail.OrderStatus)

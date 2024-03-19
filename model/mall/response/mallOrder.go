@@ -15,11 +15,12 @@ type MallOrderResponse struct {
 }
 
 type MallOrderItemVO struct {
-	GoodsId       int    `json:"goodsId"`
-	GoodsName     string `json:"goodsName"`
-	GoodsCount    int    `json:"goodsCount"`
-	GoodsCoverImg string `json:"goodsCoverImg"`
-	SellingPrice  int    `json:"sellingPrice"`
+	GoodsId        int      `json:"goodsId"`
+	GoodsName      string   `json:"goodsName"`
+	GoodsCount     int      `json:"goodsCount"`
+	GoodsCoverImg  string   `json:"goodsCoverImg"`
+	SellingPrice   int      `json:"sellingPrice"`
+	BlockChainHash []string `json:"blockChainHash"` // 当前商品的hash
 }
 
 type MallOrderDetailVO struct {

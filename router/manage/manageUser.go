@@ -29,10 +29,6 @@ func (r *ManageAdminUserRouter) ApiManageAdminUserRouter(Router *gin.RouterGroup
 		mallAdminUserRouter.GET("adminUser/profile", mallAdminUserApi.ManageUserInfo)            // 根据ID获取 管理员详情(用来显示信息)
 		mallAdminUserRouter.PUT("adminUser/name", mallAdminUserApi.UpdateManageUserNickName)     // 更新管理员用户昵称
 		mallAdminUserRouter.PUT("adminUser/password", mallAdminUserApi.UpdateManageUserPassword) // 更新管理员用户密码
-
-		// mallAdminUserRouter.POST("createMallAdminUser", mallAdminUserApi.CreateAdminUser) // 新建MallAdminUser
-		// mallAdminUserRouter.POST("upload/file", mallAdminUserApi.UploadFile) //上传图片
-
 	}
 	// 超级管理员权限
 	{

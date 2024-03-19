@@ -10,7 +10,7 @@ type NewBeeMallOrderDetailVO struct {
 	PayTypeString          string                  `json:"payTypeString"`
 	OrderStatus            int                     `json:"orderStatus"`
 	OrderStatusString      string                  `json:"orderStatusString"`
-	CreateAt               time.Time               `json:"createTime"`
+	CreateAt               time.Time               `json:"createAt"`
 	NewBeeMallOrderItemVOS []NewBeeMallOrderItemVO `json:"newBeeMallOrderItemVOS"`
 }
 
