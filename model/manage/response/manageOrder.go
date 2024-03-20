@@ -10,14 +10,15 @@ type NewBeeMallOrderDetailVO struct {
 	PayTypeString          string                  `json:"payTypeString"`
 	OrderStatus            int                     `json:"orderStatus"`
 	OrderStatusString      string                  `json:"orderStatusString"`
-	CreateAt               time.Time               `json:"createAt"`
+	CreatedAt              time.Time               `json:"createdAt"`
 	NewBeeMallOrderItemVOS []NewBeeMallOrderItemVO `json:"newBeeMallOrderItemVOS"`
 }
 
 type NewBeeMallOrderItemVO struct {
-	GoodsId       int    `json:"goodsId"`
-	GoodsName     string `json:"goodsName"`
-	GoodsCount    int    `json:"goodsCount"`
-	GoodsCoverImg string `json:"goodsCoverImg"`
-	SellingPrice  int    `json:"sellingPrice"`
+	GoodsId        int      `json:"goodsId"`
+	GoodsName      string   `json:"goodsName"`
+	GoodsCount     int      `json:"goodsCount"`
+	GoodsCoverImg  string   `json:"goodsCoverImg"`
+	SellingPrice   int      `json:"sellingPrice"`
+	HashBlockChain []string `json:"hashBlockChain"`
 }

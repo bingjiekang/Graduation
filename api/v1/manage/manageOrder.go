@@ -65,7 +65,8 @@ func (m *ManageOrderApi) GetMallOrderList(c *gin.Context) {
 	_ = c.ShouldBindQuery(&pageInfo)
 	orderNo := c.Query("orderNo")
 	orderStatus := c.Query("orderStatus")
-	if err, list, total := mallOrderService.GetMallOrderInfoList(pageInfo, orderNo, orderStatus); err != nil {
+	token := c.GetHeader("token")
+	if err, list, total := mallOrderService.GetMallOrderInfoList(token, pageInfo, orderNo, orderStatus); err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))
 		response.FailWithMessage("获取失败", c)
 	} else {

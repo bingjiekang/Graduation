@@ -226,6 +226,8 @@ func (m *MallOrderService) FinishOrder(token string, orderNo string) (err error)
 	if mallOrder.UUid != uuid {
 		return errors.New("未查询到您的信息,禁止该操作！")
 	}
+	// 对商品区块进行信息更改orderno->mallorder->mallorderitem->blocktrading->block_chain
+
 	mallOrder.OrderStatus = enum.ORDER_SUCCESS.Code()
 	err = global.GVA_DB.Save(&mallOrder).Error
 	return
