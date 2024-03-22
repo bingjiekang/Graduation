@@ -55,7 +55,7 @@ func (m *ManageOrderService) GetMallOrderInfoList(token string, info request.Pag
 			for _, v := range orderList {
 				if v == orderNo {
 					isOk = true
-					return
+					break
 				}
 			}
 			// 没找到对应信息
@@ -262,11 +262,12 @@ func (m *ManageOrderService) CloseOrder(ids request.IdsReq) (err error) {
 					if err = global.GVA_DB.Where("goods_id = ?", orderItem.GoodsId).First(&mallGoodsInfo).Error; err != nil {
 						return errors.New("未查询商品信息！")
 					}
-					// 更新对象 mallGoodsInfo
-					if err = global.GVA_DB.Model(&manage.MallGoodsInfo{}).Where("goods_id = ?", orderItem.GoodsId).Updates(manage.MallGoodsInfo{
-						StockNum:  mallGoodsInfo.StockNum + orderItem.GoodsCount,
-						PrevStock: mallGoodsInfo.PrevStock - orderItem.PrevStock,
-					}).Error; err != nil {
+					// 更新对象 mallGoodsInfo(由于update不能更新0值,则使用save)
+					{
+						mallGoodsInfo.StockNum = mallGoodsInfo.StockNum + orderItem.GoodsCount
+						mallGoodsInfo.PrevStock = mallGoodsInfo.PrevStock - orderItem.GoodsCount
+					}
+					if err = global.GVA_DB.Where("goods_id = ?", orderItem.GoodsId).Save(mallGoodsInfo).Error; err != nil {
 						return errors.New("更新商品信息失败！")
 					}
 				}

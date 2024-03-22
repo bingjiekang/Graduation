@@ -73,8 +73,11 @@ func (m *MallOrderService) SaveOrder(token string, userAddress mall.MallUserAddr
 				// 商家订单信息
 				var mallAdminOrder manage.MallAdminOrder
 				global.GVA_DB.Where("goods_id =?", stockNumDTO.GoodsId).First(&goodsInfo)
-				// 更新库存信息
-				if err = global.GVA_DB.Where("goods_id =? and stock_num>= ? and goods_sell_status = 0", stockNumDTO.GoodsId, stockNumDTO.GoodsCount).Updates(manage.MallGoodsInfo{StockNum: goodsInfo.StockNum - stockNumDTO.GoodsCount}).Error; err != nil {
+				// 更新库存信息(由于updates 不能更新0值,则转用save)
+				{
+					goodsInfo.StockNum = goodsInfo.StockNum - stockNumDTO.GoodsCount
+				}
+				if err = global.GVA_DB.Where("goods_id =? and stock_num>= ? and goods_sell_status = 0", stockNumDTO.GoodsId, stockNumDTO.GoodsCount).Save(goodsInfo).Error; err != nil {
 					// 事务回滚
 					transaction.Rollback()
 					return errors.New(fmt.Sprintf("抱歉 %s 商品库存不足！", goodsInfo.GoodsName)), orderNo
@@ -273,13 +276,14 @@ func (m *MallOrderService) CancelOrder(token string, orderNo string) (err error)
 	if mallOrder.UUid != uuid {
 		return errors.New("未查询到您的信息,禁止该操作！")
 	}
-	if utils.NumsInList(mallOrder.OrderStatus, []int{enum.ORDER_SUCCESS.Code(),
-		enum.ORDER_CLOSED_BY_MALLUSER.Code(), enum.ORDER_CLOSED_BY_EXPIRED.Code(), enum.ORDER_CLOSED_BY_JUDGE.Code()}) {
+	fmt.Println("订单状态", mallOrder.OrderStatus)
+	if utils.NumsInList(mallOrder.OrderStatus, []int{enum.ORDER_SUCCESS.Code(), enum.ORDER_CLOSED_BY_MALLUSER.Code(), enum.ORDER_CLOSED_BY_EXPIRED.Code(), enum.ORDER_CLOSED_BY_JUDGE.Code()}) {
+		fmt.Println("状态值", []int{enum.ORDER_SUCCESS.Code(), enum.ORDER_CLOSED_BY_MALLUSER.Code(), enum.ORDER_CLOSED_BY_EXPIRED.Code(), enum.ORDER_CLOSED_BY_JUDGE.Code()})
 		return errors.New("订单状态异常！")
 	}
 	mallOrder.OrderStatus = enum.ORDER_CLOSED_BY_MALLUSER.Code()
 	if err = global.GVA_DB.Save(&mallOrder).Error; err != nil {
-		return
+		return err
 	}
 	// 复原商品库存 orderno->orderitem->mallgoodsinfo
 	var orderItems []manage.MallOrderItem
@@ -291,11 +295,12 @@ func (m *MallOrderService) CancelOrder(token string, orderNo string) (err error)
 		if err = global.GVA_DB.Where("goods_id = ?", orderItem.GoodsId).First(&mallGoodsInfo).Error; err != nil {
 			return errors.New("未查询商品信息！")
 		}
-		// 更新对象 mallGoodsInfo
-		if err = global.GVA_DB.Model(&manage.MallGoodsInfo{}).Where("goods_id = ?", orderItem.GoodsId).Updates(manage.MallGoodsInfo{
-			StockNum:  mallGoodsInfo.StockNum + orderItem.GoodsCount,
-			PrevStock: mallGoodsInfo.PrevStock - orderItem.PrevStock,
-		}).Error; err != nil {
+		// 更新对象 mallGoodsInfo(由于update不能更新0值,则使用save)
+		{
+			mallGoodsInfo.StockNum = mallGoodsInfo.StockNum + orderItem.GoodsCount
+			mallGoodsInfo.PrevStock = mallGoodsInfo.PrevStock - orderItem.GoodsCount
+		}
+		if err = global.GVA_DB.Where("goods_id = ?", orderItem.GoodsId).Save(mallGoodsInfo).Error; err != nil {
 			return errors.New("更新商品信息失败！")
 		}
 	}

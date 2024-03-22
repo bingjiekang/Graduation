@@ -54,7 +54,7 @@ func (g MallOrderStatusEnum) Code() int {
 	case ORDER_CLOSED_BY_EXPIRED:
 		return -2
 	case ORDER_CLOSED_BY_JUDGE:
-		return 3
+		return -3
 	default:
 		return -9
 	}
