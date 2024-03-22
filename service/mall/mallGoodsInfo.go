@@ -40,9 +40,9 @@ func (m *MallGoodsInfoService) MallGoodsListBySearch(pageNumber int, goodsCatego
 	if keyword != "" {
 		db.Where("goods_name like ? or goods_intro like ?", "%"+keyword+"%", "%"+keyword+"%")
 	}
-	if goodsCategoryId >= 0 {
-		db.Where("goods_category_id= ?", goodsCategoryId)
-	}
+	// if goodsCategoryId >= 0 {
+	// 	db.Where("goods_category_id= ?", goodsCategoryId)
+	// }
 	err = db.Count(&total).Error
 	switch orderBy {
 	case "new":

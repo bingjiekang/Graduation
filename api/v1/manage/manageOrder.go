@@ -51,7 +51,8 @@ func (m *ManageOrderApi) CloseOrder(c *gin.Context) {
 // FindMallOrder 用id查询MallOrder
 func (m *ManageOrderApi) FindMallOrder(c *gin.Context) {
 	id := c.Param("orderId")
-	if err, newBeeMallOrderDetailVO := mallOrderService.GetMallOrder(id); err != nil {
+	token := c.GetHeader("token")
+	if err, newBeeMallOrderDetailVO := mallOrderService.GetMallOrder(token, id); err != nil {
 		global.GVA_LOG.Error("查询失败!", zap.Error(err))
 		response.FailWithMessage("查询失败", c)
 	} else {

@@ -232,7 +232,7 @@ func (m *ManageOrderService) CheckOut(ids request.IdsReq) (err error) {
 	return
 }
 
-// CloseOrder 商家关闭订单
+// CloseOrder 商家关闭订单()
 func (m *ManageOrderService) CloseOrder(ids request.IdsReq) (err error) {
 	var orders []mage.MallOrder
 	err = global.GVA_DB.Where("order_id in ?", ids.Ids).Find(&orders).Error
@@ -250,6 +250,26 @@ func (m *ManageOrderService) CloseOrder(ids request.IdsReq) (err error) {
 		if errorOrders == "" {
 			if err = global.GVA_DB.Where("order_id in ?", ids.Ids).UpdateColumns(mage.MallOrder{OrderStatus: enum.ORDER_CLOSED_BY_JUDGE.Code()}).Error; err != nil {
 				return err
+			}
+			for _, v := range ids.Ids {
+				// 复原商品库存 orderno->orderitem->mallgoodsinfo
+				var orderItems []manage.MallOrderItem
+				if err = global.GVA_DB.Where("order_id = ?", v).Find(&orderItems).Error; err != nil {
+					return errors.New("未查询到商品交易记录！")
+				}
+				for _, orderItem := range orderItems {
+					var mallGoodsInfo manage.MallGoodsInfo
+					if err = global.GVA_DB.Where("goods_id = ?", orderItem.GoodsId).First(&mallGoodsInfo).Error; err != nil {
+						return errors.New("未查询商品信息！")
+					}
+					// 更新对象 mallGoodsInfo
+					if err = global.GVA_DB.Model(&manage.MallGoodsInfo{}).Where("goods_id = ?", orderItem.GoodsId).Updates(manage.MallGoodsInfo{
+						StockNum:  mallGoodsInfo.StockNum + orderItem.GoodsCount,
+						PrevStock: mallGoodsInfo.PrevStock - orderItem.PrevStock,
+					}).Error; err != nil {
+						return errors.New("更新商品信息失败！")
+					}
+				}
 			}
 		} else {
 			return errors.New("订单不能执行关闭操作")

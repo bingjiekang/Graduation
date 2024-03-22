@@ -220,20 +220,46 @@ func (m *MallOrderService) FinishOrder(token string, orderNo string) (err error)
 	}
 	uuid, _, _ := utils.UndoToken(token)
 	var mallOrder manage.MallOrder
-	if err = global.GVA_DB.Where("order_no=? and is_deleted = 0", orderNo).First(&mallOrder).Error; err != nil {
+	if err = global.GVA_DB.Where("order_no = ? and is_deleted = 0", orderNo).First(&mallOrder).Error; err != nil {
 		return errors.New("未查询到记录！")
 	}
 	if mallOrder.UUid != uuid {
 		return errors.New("未查询到您的信息,禁止该操作！")
 	}
 	// 对商品区块进行信息更改orderno->mallorder->mallorderitem->blocktrading->block_chain
+	var mallOrderItems []manage.MallOrderItem
+	if err = global.GVA_DB.Where("order_id = ? ", mallOrder.OrderId).Find(&mallOrderItems).Error; err != nil {
+		return errors.New("未查询商品信息记录到记录！")
+	}
+	for _, mallOrderItem := range mallOrderItems {
+		for i := mallOrderItem.PrevStock + 1; i <= mallOrderItem.PrevStock+mallOrderItem.GoodsCount; i++ {
+			// 查询到相应信息
+			var blockTrading manage.MallBlockTrading
+			if err = global.GVA_DB.Where("order_no = ? and commodity = ? and commodity_stocks = ?", orderNo, mallOrderItem.GoodsId, i).First(&blockTrading).Error; err != nil {
+				return errors.New("未查询商品区块交易信息！")
+			}
+			// 获取对象信息
+			var blockChain manage.MallBlockChain
+			if err = global.GVA_DB.Where("commodity = ? and commodity_stocks = ?", mallOrderItem.GoodsId, i).First(&blockChain).Error; err != nil {
+				return errors.New("未查询商品区块信息！")
+			}
+			// 更新对象block_chain
+			if err = global.GVA_DB.Model(&manage.MallBlockChain{}).Where("commodity = ? and commodity_stocks = ?", mallOrderItem.GoodsId, i).Updates(manage.MallBlockChain{
+				CurrBlockHash: blockTrading.CurrBlockHash,
+				IsSale:        true,
+				Number:        blockChain.Number + 1,
+			}).Error; err != nil {
+				return errors.New("更新商品区块信息失败！")
+			}
+		}
+	}
 
 	mallOrder.OrderStatus = enum.ORDER_SUCCESS.Code()
 	err = global.GVA_DB.Save(&mallOrder).Error
 	return
 }
 
-// CancelOrder 关闭订单
+// CancelOrder 关闭订单(取消订单)复原库存
 func (m *MallOrderService) CancelOrder(token string, orderNo string) (err error) {
 	// 判断用户是否存在
 	if !IsUserExist(token) {
@@ -252,7 +278,27 @@ func (m *MallOrderService) CancelOrder(token string, orderNo string) (err error)
 		return errors.New("订单状态异常！")
 	}
 	mallOrder.OrderStatus = enum.ORDER_CLOSED_BY_MALLUSER.Code()
-	err = global.GVA_DB.Save(&mallOrder).Error
+	if err = global.GVA_DB.Save(&mallOrder).Error; err != nil {
+		return
+	}
+	// 复原商品库存 orderno->orderitem->mallgoodsinfo
+	var orderItems []manage.MallOrderItem
+	if err = global.GVA_DB.Where("order_id = ?", mallOrder.OrderId).Find(&orderItems).Error; err != nil {
+		return errors.New("未查询到商品交易记录！")
+	}
+	for _, orderItem := range orderItems {
+		var mallGoodsInfo manage.MallGoodsInfo
+		if err = global.GVA_DB.Where("goods_id = ?", orderItem.GoodsId).First(&mallGoodsInfo).Error; err != nil {
+			return errors.New("未查询商品信息！")
+		}
+		// 更新对象 mallGoodsInfo
+		if err = global.GVA_DB.Model(&manage.MallGoodsInfo{}).Where("goods_id = ?", orderItem.GoodsId).Updates(manage.MallGoodsInfo{
+			StockNum:  mallGoodsInfo.StockNum + orderItem.GoodsCount,
+			PrevStock: mallGoodsInfo.PrevStock - orderItem.PrevStock,
+		}).Error; err != nil {
+			return errors.New("更新商品信息失败！")
+		}
+	}
 	return
 }
 
