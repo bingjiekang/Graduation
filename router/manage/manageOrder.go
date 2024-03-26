@@ -18,6 +18,7 @@ func (r *ManageOrderRouter) ApiManageOrderRouter(Router *gin.RouterGroup) {
 	{
 		mallOrderRouter.GET("orders/:orderId", mallOrderApi.FindMallOrder) // 根据ID获取MallOrder
 		mallOrderRouter.GET("orders", mallOrderApi.GetMallOrderList)       // 获取MallOrder列表
+		mallOrderRouter.GET("getblockchain", mallOrderApi.GetBlockChain)   // 获取商品区块信息
 	}
 	// 商品在超级管理员(总销商)负责发货/出库/取消/
 	{

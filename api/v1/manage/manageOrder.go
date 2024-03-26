@@ -79,3 +79,19 @@ func (m *ManageOrderApi) GetMallOrderList(c *gin.Context) {
 		}, "获取成功", c)
 	}
 }
+
+// 获取商品区块信息
+func (m *ManageOrderApi) GetBlockChain(c *gin.Context) {
+	blockChain := c.Query("checkBlockChain")
+	token := c.GetHeader("token")
+	if err, uUid, initBlockChain, currBlockChain := mallOrderService.GetBlockChainInfo(token, blockChain); err != nil {
+		global.GVA_LOG.Error("获取商品区块失败!", zap.Error(err))
+		response.FailWithMessage("获取商品区块失败", c)
+	} else {
+		response.OkWithDetailed(map[string]interface{}{
+			"uUid":           uUid,
+			"initBlockChain": initBlockChain,
+			"currBlockChain": currBlockChain,
+		}, "获取成功", c)
+	}
+}

@@ -144,14 +144,14 @@ func (m *ManageOrderService) GetMallOrder(token string, id string) (err error, m
 		// copier.Copy(&mallOrderItemVOS, &orderItems)
 		// 遍历交易订单将order的哈希交易加入到hashblockchain
 		for _, orderItem := range orderItems {
-			var nums []int = make([]int, 0)
-			for count := orderItem.PrevStock + 1; count <= orderItem.PrevStock+orderItem.GoodsCount; count++ {
-				// 记录对应的库存位信息
-				nums = append(nums, count)
-			}
+			// var nums []int = make([]int, 0)
+			// for count := orderItem.PrevStock + 1; count <= orderItem.PrevStock+orderItem.GoodsCount; count++ {
+			// 	// 记录对应的库存位信息
+			// 	nums = append(nums, count)
+			// }
 			var tempBlcokTrading []mage.MallBlockTrading
 			// 查询区块交易的对应信息
-			if err = global.GVA_DB.Where("order_no = ? and Commodity = ? and Commodity_stocks in ?", mallOrder.OrderNo, orderItem.GoodsId, nums).Find(&tempBlcokTrading).Error; err != nil {
+			if err = global.GVA_DB.Where("order_no = ? and Commodity = ?", mallOrder.OrderNo, orderItem.GoodsId).Find(&tempBlcokTrading).Error; err != nil {
 				return
 			}
 			// 将对应信息以及区块哈希交易加入到返回列表里
@@ -265,7 +265,7 @@ func (m *ManageOrderService) CloseOrder(ids request.IdsReq) (err error) {
 					// 更新对象 mallGoodsInfo(由于update不能更新0值,则使用save)
 					{
 						mallGoodsInfo.StockNum = mallGoodsInfo.StockNum + orderItem.GoodsCount
-						mallGoodsInfo.PrevStock = mallGoodsInfo.PrevStock - orderItem.GoodsCount
+						// mallGoodsInfo.PrevStock = mallGoodsInfo.PrevStock - orderItem.GoodsCount
 					}
 					if err = global.GVA_DB.Where("goods_id = ?", orderItem.GoodsId).Save(mallGoodsInfo).Error; err != nil {
 						return errors.New("更新商品信息失败！")
@@ -275,6 +275,30 @@ func (m *ManageOrderService) CloseOrder(ids request.IdsReq) (err error) {
 		} else {
 			return errors.New("订单不能执行关闭操作")
 		}
+	}
+	return
+}
+
+// 获取商品区块链信息
+func (m *ManageOrderService) GetBlockChainInfo(token string, checkBlockChain string) (err error, uUid string, initBlockchain string, currBlockChain string) {
+	uuid, _, _ := utils.UndoToken(token)
+	var mallAdminOrder manage.MallAdminUser
+	err = global.GVA_DB.Where("u_uid =?", uuid).First(&mallAdminOrder).Error
+	if err != nil {
+		return errors.New("不存在的管理员用户"), uUid, initBlockchain, currBlockChain
+	}
+	var blockChain manage.MallBlockChain
+	if err = global.GVA_DB.Where("curr_block_hash = ?", checkBlockChain).Find(&blockChain).Error; err != nil {
+		return
+	}
+	if blockChain != (manage.MallBlockChain{}) {
+		uUid = strconv.FormatInt(blockChain.UUid, 10)
+		initBlockchain = blockChain.InitBlockHash
+		currBlockChain = blockChain.CurrBlockHash
+	} else {
+		uUid = "未查询到信息"
+		initBlockchain = "未查询到信息"
+		currBlockChain = "未查询到信息"
 	}
 	return
 }
