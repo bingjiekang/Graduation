@@ -16,7 +16,7 @@ mysql:
   config: charset=utf8mb4&parseTime=True&loc=Local
   db-name: graduation
   username: root
-  password: xxxxxxx
+  password: 12345678
   max-idle-conns: 0
   max-open-conns: 0
   log-mode: ""
@@ -24,7 +24,7 @@ mysql:
 
 # mysql自定义配置
 system:
-  addr: 8888
+  addr: 8887
   db-type: mysql
   oss-type: local
   use-multipoint: false

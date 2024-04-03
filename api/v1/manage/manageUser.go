@@ -132,7 +132,7 @@ func (m *ManageAdminUserApi) UploadFile(c *gin.Context) {
 		return
 	}
 	//这里直接使用本地的url
-	response.OkWithData("http://localhost:8080/"+file.Url, c)
+	response.OkWithData("http://140.83.37.178:8080/"+file.Url, c)
 }
 
 // UploadFiles 上传多张图片
@@ -167,7 +167,7 @@ func (m *ManageAdminUserApi) UploadFiles(c *gin.Context) {
 			return
 		}
 		//这里直接使用本地的url
-		datafile = append(datafile, "http://localhost:8080/"+file.Url)
+		datafile = append(datafile, "http://140.83.37.178:8080/"+file.Url)
 	}
 	response.OkWithData(datafile, c)
 }
